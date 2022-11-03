@@ -8,7 +8,7 @@ din=data
 dou=indx
 mkdir -p $dou
 
-v=pr
+v=tas
 rcm=MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6
 frq=day
 yrs=1970-2005
@@ -19,16 +19,16 @@ dy=$(( $y2 - $y1 + 1 ))
 
 # simple daily intensity index
 # sum of pr(>1mm)/no of wet days
-idx=sdii
+idx=tmean
 fin=$din/${v}_${rcm}_${frq}_${yrs}.nc
 fou=$dou/${v}_${idx}_${rcm}_${fcs}.nc
 
 echo "###################"
-echo "## index = $idx($v)"
+echo "## index = $idx($v) "
 echo "## model = $rcm"
 echo "###################"
-vo=simple_daily_intensity_index_per_time_period
-CDO chname,$vo,$idx -eca_sdii -mulc,86400 -selyear,$y1/$y2 $fin $fou
+CDO chname,$v,$idx -timmean -selyear,$y1/$y2 $fin $fou
+
 echo "Done!"
 
 }
