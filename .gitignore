@@ -1,0 +1,5 @@
+# Executables
+*.exe
+*.out
+*.err
+update_scripts.sh
