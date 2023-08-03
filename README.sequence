@@ -1,0 +1,5 @@
+1. run main/run_all_indices.sh      ### - prepares 2D climate indices
+2. run main/submit_read-and-log.sh  ### - extracts corresponding index value from lat/lons
+3. run main/bootstrapping.sh        ### - bootstrap & standardize data (bio & clim)
+4. run main/pca.sh                  ### - apply PCA to obtain PC
+5. run main/mahalonobis.sh          ### - apply mahalonobis distance & combine factors

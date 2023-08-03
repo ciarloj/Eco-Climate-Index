@@ -1,0 +1,102 @@
+#!/bin/bash
+#SBATCH -J read-and-log
+#SBATCH -o logs/read-and-log.o
+#SBATCH -e logs/read-and-log.e
+#SBATCH -t 24:00:00
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=jciarlo@ictp.it
+#SBATCH -p esp
+
+{
+set -eo pipefail
+startTime=$(date +"%s" -u)
+CDO(){
+  cdo -O -L -f nc4 -z zip $@
+}
+
+## Set inputs
+nam=$2 #EOBS-010-v25e
+if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then
+  dat=RCMs
+  fcs=1986-2005
+  vars="pr tas mrso sfcWind orog"
+elif [ $nam = EOBS-010-v25e ]; then
+  dat=OBS
+  fcs=1995-2014
+  vars="pr tas tasmax tasmin sfcWind orog"
+fi
+ddir=data/$dat/$nam
+
+ocsv=$1   ## path to inaturalist csv file
+#if [ $# -ne 1 ]; then
+#   echo "Please provide CSV file name"
+#   echo "Example: $0 data/OBS/iNaturalist/apis-mellifera_iNaturalist_eur.csv"
+#   exit 1
+#fi
+if [ ! -f $ocsv ]; then
+  echo 'Missing obs file: '$csv
+  exit -1
+fi
+obs=$( basename $( dirname $ocsv ))
+
+## Start processing
+idir=$ddir/index/
+odir=$idir/$obs
+lout=$odir/$( basename $ocsv .csv )_${nam}.log
+mkdir -p $odir
+
+echo "##########################################"
+echo "## obs   = $( basename $ocsv .csv )"
+echo "## data  = $nam"
+echo "##########################################"
+
+header="# lat lon"
+v_pr="cdd r99 prsum"
+v_ts="hwfi cwfi tasmean"
+v_tx="tasmaxmax tasmaxmean"
+v_tn="tasminmin tasminmean"
+v_mr="mrsomean"
+v_wd="fg6bft windmean"
+v_og="orog"
+
+i=0
+while read line; do
+  i=$(( $i + 1 ))
+  [[ $i = 1 ]] && continue
+  lat=$( echo $line | cut -d, -f9 )
+  lon=$( echo $line | cut -d, -f10 )
+  #echo "## Processing $lat $lon ##"
+  entry="$(( $i-1 )) $lat $lon "
+  for v in $vars; do
+    [[ $v = pr      ]] && indices="$v_pr"
+    [[ $v = tas     ]] && indices="$v_ts"
+    [[ $v = tasmax  ]] && indices="$v_tx"
+    [[ $v = tasmin  ]] && indices="$v_tn"
+    [[ $v = mrso    ]] && indices="$v_mr"
+    [[ $v = sfcWind ]] && indices="$v_wd"
+    [[ $v = orog    ]] && indices="$v_og"
+    for id in $indices; do
+      header="$header $id"
+      #echo "## extracting $id from $v .."
+      idxf=$idir/${v}_${id}_${nam}_${fcs}.nc
+      [[ $id = orog ]] && idxf=$idir/${v}_${id}_${nam}.nc
+      tmpf=$idir/.${v}_${id}_${nam}_${fcs}_tmp.nc
+      CDO remapnn,lon=$lon/lat=$lat $idxf $tmpf >/dev/null
+      val=$( ncdump -v $id $tmpf | tail -2 | head -1 | cut -d' ' -f3 )
+      rm $tmpf
+      entry="$entry $val"
+    done
+  done
+  [[ $i = 2 ]] && echo $header > $lout
+  echo $entry >> $lout
+  echo $entry
+done < $ocsv
+
+endTime=$(date +"%s" -u)
+elapsed=$(date -u -d "0 $endTime seconds - $startTime seconds" +"%H:%M:%S")
+echo "##########################################"
+echo "## Process complete!"
+echo "## Elapsed time = $elapsed"
+echo "##########################################"
+
+}
