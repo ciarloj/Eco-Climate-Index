@@ -10,19 +10,15 @@
 set -eo pipefail
 startTime=$(date +"%s" -u)
 
-spc=xylocopa-violacea  
-obs=iNaturalist
-nam=EOBS-010-v25e
-nboot=1 #5000  # number of bootstap replications
+spc=$3 #xylocopa-violacea  
+obs=$2 #iNaturalist
+nam=$1 #EOBS-010-v25e
+nboot=$4 #1 #5000  # number of bootstap replications
 
 hdir=/home/netapp-clima-scratch/jciarlo/paleosim
-if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then
-  dat=RCMs
-  fcs=1986-2005
-elif [ $nam = EOBS-010-v25e ]; then
-  dat=OBS
-  fcs=1995-2014
-fi
+dat=$5 #OBS
+fcs=$6 #1995-2014
+
 idir=data/$dat/$nam/index/$obs/boot_${nboot}/standard
 export bdir=$idir/pca
 mkdir -p $bdir
@@ -35,7 +31,7 @@ echo "## meteo = $nam"
 echo "## nboot = $nboot"
 echo "##########################################"
 
-flog=$( basename $( eval ls $idir/${spc}_${obs}_*_${nam}.csv ) .csv )
+flog=$( basename $( eval ls $idir/${spc}_${obs}_${nam}.csv ) .csv )
 script=tools/pca.R
 #echo $idir/$flog
 Rscript $script "$flog $idir" 
@@ -53,9 +49,7 @@ for c in $( seq 1 $ncomp ); do
   echo "## preparing Comp. $c ##"
   cf=$( ls $bdir/${spc}_${obs}_*_${nam}_comp${c}.csv )
   of=$bdir/comp${c}_${nam}_${obs}_${spc}_${fcs}.nc
-  l=0
   for l in $( seq 1 $nlin ); do
-    l=$(( l + 1 ))
     [[ $l -le 1 ]] && continue
     line=$( cat $cf | head -$l | tail -1 )
     var=$( echo $line | cut -d, -f1 | cut -d'"' -f2 )

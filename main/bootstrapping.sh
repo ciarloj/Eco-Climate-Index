@@ -13,19 +13,15 @@ CDO(){
 }
 startTime=$(date +"%s" -u)
 
-export spc=xylocopa-violacea    
-export obs=iNaturalist
-export nam=EOBS-010-v25e
-export nboot=1 #5000  # number of bootstap replications
+export spc=$3 #xylocopa-violacea    
+export obs=$2 #iNaturalist
+export nam=$1 #EOBS-010-v25e
+export nboot=$4 #1 #5000  # number of bootstap replications
 
 hdir=/home/netapp-clima-scratch/jciarlo/paleosim
-if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then
-  dat=RCMs
-  fcs=1986-2005
-elif [ $nam = EOBS-010-v25e ]; then
-  dat=OBS
-  fcs=1995-2014
-fi
+dat=$5 #OBS
+fcs=$6 #1995-2014
+
 cdir=data/$dat/$nam/index
 export idir=$cdir/$obs
 export bdir=$idir/boot_${nboot}
@@ -39,7 +35,7 @@ echo "## meteo = $nam"
 echo "## nboot = $nboot"
 echo "##########################################"
 
-export flog=$( basename $( eval ls $idir/${spc}_${obs}_*_${nam}.log ) )
+export flog=$( basename $( eval ls $idir/${spc}_${obs}_${nam}.log ) )
 script=tools/bootstrapping.ncl
 
 todouble="warning:todouble: A bad value was passed to (string) todouble"
@@ -62,7 +58,6 @@ for v in $vars; do
 
   [[ $v = orog ]] && ivf=$( eval ls $cdir/*_${v}_${nam}.nc ) || ivf=$( eval ls $cdir/*_${v}_${nam}_${fcs}.nc )
   ovf=$sdir/$( basename $ivf )
-[[ $v = prsum ]] && set -x
   CDO divc,$stdv -subc,$avgv $ivf $ovf
 done
 

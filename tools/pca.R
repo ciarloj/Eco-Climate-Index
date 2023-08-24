@@ -12,6 +12,8 @@ args_splt = strsplit(args, " ")
 #print(args_splt)
 flog <- args_splt[[1]][1]
 idir <- args_splt[[1]][2]
+#print(flog)
+#print(idir)
 
 # Load data
 file1 <- paste(idir, flog, sep="/")
@@ -54,6 +56,8 @@ for (i in 4:ncol){
 #Execute Principal Component Analysis
 PCA <- princomp(na.omit(nm_data[4:ncol]))
 summary(PCA)
+#sPC <- summary(PCA)
+#vs <- as.data.frame.matrix(sPC)
 PCL <- PCA$loadings
 PC = PCA$scores
 ss = as.data.frame.matrix(PC)

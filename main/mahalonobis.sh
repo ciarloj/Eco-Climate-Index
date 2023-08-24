@@ -1,4 +1,11 @@
 #!/bin/bash
+#SBATCH -J mahalonobis
+#SBATCH -o logs/mah.o
+#SBATCH -e logs/mah.e
+#SBATCH -t 24:00:00
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=jciarlo@ictp.it
+#SBATCH -p esp
 {
 set -eo pipefail
 startTime=$(date +"%s" -u)
@@ -6,19 +13,15 @@ CDO(){
   cdo -O -L -f nc4 -z zip $@
 }
 
-export spc=xylocopa-violacea   
-export obs=iNaturalist
-export nam=EOBS-010-v25e
-nboot=1 #5000  # number of bootstap replications
+export spc=$3 #xylocopa-violacea   
+export obs=$2 #iNaturalist
+export nam=$1 #EOBS-010-v25e
+nboot=$4 #1 #5000  # number of bootstap replications
 
 hdir=/home/netapp-clima-scratch/jciarlo/paleosim
-if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then
-  dat=RCMs
-  fcs=1986-2005
-elif [ $nam = EOBS-010-v25e ]; then
-  dat=OBS
-  fcs=1995-2014
-fi
+dat=$5 #OBS
+fcs=$6 #1995-2014
+
 ndir=data/$dat/$nam/index/$obs/boot_${nboot}/standard/pca
 mdir=$ndir/mahalonobis
 mkdir -p $mdir
@@ -31,10 +34,10 @@ echo "## model = $nam"
 echo "##########################################"
 
 #count the number of components
-export ncomp=$( ls $ndir/${spc}_${obs}_*_${nam}_comp*csv | wc -l )
+export ncomp=$( ls $ndir/${spc}_${obs}_${nam}_comp*csv | wc -l )
 echo ncomp = $ncomp
 
-export scrf=$( ls $ndir/${spc}_${obs}_*_${nam}_scores.csv )
+export scrf=$( ls $ndir/${spc}_${obs}_${nam}_scores.csv )
 combi=""
 for c in $( seq 1 $ncomp ); do
   echo $c ..
@@ -47,7 +50,8 @@ for c in $( seq 1 $ncomp ); do
   echo "## $cn avg=$avg std=$std lim=$lim ##"
   ncf=$ndir/comp${cn}_${nam}_${obs}_${spc}_${fcs}.nc
   ouf=$mdir/$( basename $ncf )
-  CDO addc,1 -mulc,-1 -divc,$lim -abs -divc,$std -subc,$avg $ncf $ouf
+  set0='setmissval,-9999 -setrtoc,-inf,0,0'
+  CDO $set0 -addc,1 -mulc,-1 -divc,$lim -abs -divc,$std -subc,$avg $ncf $ouf
 
   if [ $c -lt $ncomp ]; then
     [[ $c = 1 ]] && combi="$combi mul $ouf" || combi="${combi} -mul $ouf"

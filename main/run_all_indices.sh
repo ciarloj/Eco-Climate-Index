@@ -3,24 +3,18 @@
 set -eo pipefail
 
 ## Set inputs
-nam=EOBS-010-v25e
+nam=$1 #EOBS-010-v25e
 frq=day
 
 hdir=/home/netapp-clima-scratch/jciarlo/paleosim
 mdir=$hdir/main
 idir=$mdir/indices
 
-if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then
-  dat=RCMs
-  yrs=1970-2005
-  fcs=1986-2005
-elif [ $nam = EOBS-010-v25e ]; then
-  dat=OBS
-  yrs=1985-2021
-  fcs=1995-2014
-  vars="pr tas tasmax tasmin sfcWind orog"
-fi
-vars="pr tas tasmax tasmin"
+# [ $nam = EOBS-010-v25e ]; then
+dat=$2 #OBS
+yrs=$3 #1985-2021 #years available
+fcs=$4 #1995-2014 #years to study
+vars=$5 #"pr tas tasmax tasmin sfcWind orog popden"
 din=$hdir/data/$dat/$nam
 
 for v in $vars; do
@@ -30,6 +24,7 @@ for v in $vars; do
   [[ $v = tasmin  ]] && indices="tasminmin tasminmean"
   [[ $v = sfcWind ]] && indices="fg6bft windmean"
   [[ $v = orog    ]] && indices="orog"
+  [[ $v = popden  ]] && indices="popdenmean"
   for i in $indices; do
     bs="bash"
     [[ $i = r99    ]] && bs="slurm"

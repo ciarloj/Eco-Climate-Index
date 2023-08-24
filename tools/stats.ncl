@@ -26,6 +26,23 @@ begin
   maxc = max(compx)
   minc = min(compx)
 
+  ; using Carling's modification to identify limits of outliers instead of max/min
+  n = nrows-1 ; sample size
+  k = ((17.62*n)-23.64)/((7.74*n)-3.71)
+  medc = dim_median(compx) ; median
+  statc = stat_dispersion(compx,False)
+  p25c = statc(6)  ; q1
+  p75c = statc(10) ; q2
+  btlim = medc - (k*(p75c-p25c)) 
+  tplim = medc + (k*(p75c-p25c))
+  
+  maxc = tplim
+  ; some variables have a lower value of 0 (like pr) which may get negative btlim
+  ; in these cases we take the minimum as the limit
+  if ( minc .lt. btlim ) then
+    minc = btlim
+  end if
+
 ; initial simplified standard system
   nx = abs((maxc-mean)/stdv)
   nn = abs((minc-mean)/stdv)

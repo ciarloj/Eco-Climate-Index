@@ -16,15 +16,11 @@ CDO(){
 
 ## Set inputs
 nam=$2 #EOBS-010-v25e
-if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then
-  dat=RCMs
-  fcs=1986-2005
-  vars="pr tas mrso sfcWind orog"
-elif [ $nam = EOBS-010-v25e ]; then
-  dat=OBS
-  fcs=1995-2014
-  vars="pr tas tasmax tasmin sfcWind orog"
-fi
+# [ $nam = EOBS-010-v25e ]; then
+dat=$3 #OBS
+fcs=$4 #1995-2014
+vars=$5 #"pr tas tasmax tasmin sfcWind orog"
+
 ddir=data/$dat/$nam
 
 ocsv=$1   ## path to inaturalist csv file
@@ -58,6 +54,7 @@ v_tn="tasminmin tasminmean"
 v_mr="mrsomean"
 v_wd="fg6bft windmean"
 v_og="orog"
+v_po="popdenmean"
 
 i=0
 while read line; do
@@ -75,11 +72,13 @@ while read line; do
     [[ $v = mrso    ]] && indices="$v_mr"
     [[ $v = sfcWind ]] && indices="$v_wd"
     [[ $v = orog    ]] && indices="$v_og"
+    [[ $v = popden  ]] && indices="$v_po"
     for id in $indices; do
       header="$header $id"
       #echo "## extracting $id from $v .."
       idxf=$idir/${v}_${id}_${nam}_${fcs}.nc
       [[ $id = orog ]] && idxf=$idir/${v}_${id}_${nam}.nc
+      [[ $id = popdenmean ]] && idxf=$idir/${v}_${id}_${nam}.nc
       tmpf=$idir/.${v}_${id}_${nam}_${fcs}_tmp.nc
       CDO remapnn,lon=$lon/lat=$lat $idxf $tmpf >/dev/null
       val=$( ncdump -v $id $tmpf | tail -2 | head -1 | cut -d' ' -f3 )
