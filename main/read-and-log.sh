@@ -24,6 +24,7 @@ vars=$5 #"pr tas tasmax tasmin sfcWind orog"
 ddir=data/$dat/$nam
 
 ocsv=$1   ## path to inaturalist csv file
+spc=$( basename $ocsv | cut -d_ -f1 )
 #if [ $# -ne 1 ]; then
 #   echo "Please provide CSV file name"
 #   echo "Example: $0 data/OBS/iNaturalist/apis-mellifera_iNaturalist_eur.csv"
@@ -79,7 +80,7 @@ while read line; do
       idxf=$idir/${v}_${id}_${nam}_${fcs}.nc
       [[ $id = orog ]] && idxf=$idir/${v}_${id}_${nam}.nc
       [[ $id = popdenmean ]] && idxf=$idir/${v}_${id}_${nam}.nc
-      tmpf=$idir/.${v}_${id}_${nam}_${fcs}_tmp.nc
+      tmpf=$idir/.${v}_${id}_${nam}_${fcs}_${spc}_tmp.nc
       CDO remapnn,lon=$lon/lat=$lat $idxf $tmpf >/dev/null
       val=$( ncdump -v $id $tmpf | tail -2 | head -1 | cut -d' ' -f3 )
       rm $tmpf
