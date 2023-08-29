@@ -37,24 +37,28 @@ script=tools/pca.R
 Rscript $script "$flog $idir" 
 
 #count the number of components
-ncomp=$( ls $bdir/${spc}_${obs}_*_${nam}_comp*csv | wc -l )
+ncomp=$( ls $bdir/${spc}_${obs}_${nam}_comp*csv | wc -l )
 echo ncomp = $ncomp
 
 #count the numbero of liness
-nlin=$( cat $bdir/${spc}_${obs}_*_${nam}_comp1.csv | wc -l )
+nlin=$( cat $bdir/${spc}_${obs}_${nam}_comp1.csv | wc -l )
 echo nlin = $nlin
 
 #...read the components?
 for c in $( seq 1 $ncomp ); do
   echo "## preparing Comp. $c ##"
-  cf=$( ls $bdir/${spc}_${obs}_*_${nam}_comp${c}.csv )
+  cf=$( ls $bdir/${spc}_${obs}_${nam}_comp${c}.csv )
   of=$bdir/comp${c}_${nam}_${obs}_${spc}_${fcs}.nc
   for l in $( seq 1 $nlin ); do
     [[ $l -le 1 ]] && continue
     line=$( cat $cf | head -$l | tail -1 )
     var=$( echo $line | cut -d, -f1 | cut -d'"' -f2 )
     fac=$( echo $line | cut -d, -f2 )
-    [[ $var = orog ]] && ivf=$( eval ls $idir/*_${var}_${nam}.nc ) || ivf=$( eval ls $idir/*_${var}_${nam}_${fcs}.nc )
+    if [ $var = orog -o $var = popdenmean ]; then
+      ivf=$( eval ls $idir/*_${var}_${nam}.nc )
+    else
+      ivf=$( eval ls $idir/*_${var}_${nam}_${fcs}.nc )
+    fi
     [[ $l = 2 ]] && CDO sub -chname,$var,comp $ivf -chname,$var,comp $ivf $of ## needs a base
     [[ $fac = NA ]] && continue
     echo "-- calculating $var with $fac --"

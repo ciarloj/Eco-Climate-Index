@@ -4,7 +4,7 @@ set -eo pipefail
 
 nam=EOBS-010-v25e
 obs=iNaturalist
-spc=$1 #xylocopa-violacea
+spc=xylocopa-violacea
 
 if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then
   dat=RCMs
@@ -29,52 +29,47 @@ else
   nboot=5000
 fi 
 
-echo "Running script for:"
-echo "  climate data = $nam ($fcs)"
-echo "  species data = $obs"
-echo "  species      = $spc"
-echo "    with nboot = $nboot"
-echo ""
-echo "Select processes to run:"
-echo " - Run $nam indices preparations? [C]"
-echo " - Run $obs ENM processes?        [E]"
-read -p "Your selection:" sel
-if [ $sel != "C" -a $sel != "E" ]; then
-  echo "Incorrect Selection: $sel - must be C or E"
-  exit 1
-fi
+scr=$1
 
-if [ $sel = C ]; then
+
+
+if [ $scr = main/run_all_indices.sh ]; then
   echo "## Running Climate indices..."
   bash main/run_all_indices.sh $nam $dat $yrs $fcs "$vars"
 fi
 
-if [ $sel = E ]; then
+if [ $scr = main/submit_read-and-log.sh ]; then
   echo "## Running Ecological Niche Model..."
   echo "submitting read-and-log..."
   jidrl=$( bash main/submit_read-and-log.sh $nam $obs $spc $dat $fcs "$vars" | tail -1 | cut -d' ' -f4 )
+fi
 
+if [ $scr = main/bootstrapping.sh ]; then
   echo "submitting bootstrap..."
   j="boot_${spc}_${nam}"
   o=logs/${j}.out
   e=logs/${j}.err
-  slrm="-J $j -o $o -e $e -d afterok:$jidrl"
+  slrm="-J $j -o $o -e $e"
   jidb=$( sbatch $slrm main/bootstrapping.sh $nam $obs $spc $nboot $dat $fcs | cut -d' ' -f4 )
+fi
 
+if [ $scr = main/pca.sh ]; then
   echo "submitting pca..."
   j="pca_${spc}_${nam}"
   o=logs/${j}.out
   e=logs/${j}.err
-  slrm="-J $j -o $o -e $e -d afterok:$jidb"
+  slrm="-J $j -o $o -e $e"
   jidp=$( eval sbatch $slrm main/pca.sh $nam $obs $spc $nboot $dat $fcs | cut -d' ' -f4 )
+fi
 
+if [ $scr = main/mahalonobis.sh ]; then
   echo "submitting mahalonobis..."
   j="mah_${spc}_${nam}"
   o=logs/${j}.out
   e=logs/${j}.err
   slrm="-J $j -o $o -e $e -d afterok:$jidp"
   jidl=$( eval sbatch $slrm main/mahalonobis.sh $nam $obs $spc $nboot $dat $fcs )
-  
-  echo "done."
-fi
+fi  
+
+echo "done."
 }

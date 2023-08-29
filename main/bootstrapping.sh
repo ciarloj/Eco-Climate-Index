@@ -56,7 +56,11 @@ for v in $vars; do
   avgv=$( head -2 $dflog | tail -1 | cut -d' ' -f$vc )
   stdv=$( tail -1 $dflog | cut -d' ' -f$vc )
 
-  [[ $v = orog ]] && ivf=$( eval ls $cdir/*_${v}_${nam}.nc ) || ivf=$( eval ls $cdir/*_${v}_${nam}_${fcs}.nc )
+  if [ $v = orog -o $v = popdenmean ]; then
+    ivf=$( eval ls $cdir/*_${v}_${nam}.nc )
+  else
+    ivf=$( eval ls $cdir/*_${v}_${nam}_${fcs}.nc )
+  fi
   ovf=$sdir/$( basename $ivf )
   CDO divc,$stdv -subc,$avgv $ivf $ovf
 done
