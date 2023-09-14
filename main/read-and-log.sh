@@ -53,7 +53,7 @@ v_ts="hwfi cwfi tasmean"
 v_tx="tasmaxmax tasmaxmean"
 v_tn="tasminmin tasminmean"
 v_mr="mrsomean"
-v_wd="fg6bft windmean"
+v_wd="windmean" #fg6bft
 v_og="orog"
 v_po="popdenmean"
 
@@ -62,7 +62,9 @@ while read line; do
   i=$(( $i + 1 ))
   [[ $i = 1 ]] && continue
   lat=$( echo $line | cut -d, -f9 )
+  [[ -z $lat ]] && continue
   lon=$( echo $line | cut -d, -f10 )
+  [[ -z $lon ]] && continue
   #echo "## Processing $lat $lon ##"
   entry="$(( $i-1 )) $lat $lon "
   for v in $vars; do

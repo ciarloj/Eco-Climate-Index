@@ -33,8 +33,26 @@ echo "## obs   = $obs"
 echo "## model = $nam"
 echo "##########################################"
 
+#check number of components required
+lpca=logs/pca_${spc}_${nam}.out
+lcomp=$( cat $lpca | grep 'Cumulative Proportion' | wc -l )
+tcomp=0.85 #threshold for cumulative proportion
+ncomp=0
+for l in $( seq 1 $lcomp ); do
+  line=$( cat $lpca | grep 'Cumulative Proportion' | head -$l | tail -1 )
+  for c in $( seq 1 5 ); do
+    cc=$(( 2 + $c ))
+    cp=$( eval echo $line | cut -d' ' -f$cc )
+    ncomp=$(( $ncomp + 1 ))
+    echo "comp # $ncomp with cum.prop = $cp"
+    [[ $cp > $tcomp ]] && break
+  done
+  [[ $cp > $tcomp ]] && break
+done
+export ncomp=$ncomp
+
 #count the number of components
-export ncomp=$( ls $ndir/${spc}_${obs}_${nam}_comp*csv | wc -l )
+#export ncomp=$( ls $ndir/${spc}_${obs}_${nam}_comp*csv | wc -l )
 echo ncomp = $ncomp
 
 export scrf=$( ls $ndir/${spc}_${obs}_${nam}_scores.csv )
@@ -51,6 +69,7 @@ for c in $( seq 1 $ncomp ); do
   ncf=$ndir/comp${cn}_${nam}_${obs}_${spc}_${fcs}.nc
   ouf=$mdir/$( basename $ncf )
   set0='setmissval,-9999 -setrtoc,-inf,0,0'
+  #echo "CDO $set0 -addc,1 -mulc,-1 -divc,$lim -abs -divc,$std -subc,$avg $ncf $ouf"
   CDO $set0 -addc,1 -mulc,-1 -divc,$lim -abs -divc,$std -subc,$avg $ncf $ouf
 
   if [ $c -lt $ncomp ]; then
@@ -62,7 +81,18 @@ done
 
 echo "## combining ..."
 ecf=$mdir/EcoIndex_${nam}_${obs}_${spc}_${fcs}.nc
+#echo "CDO $combi $ecf"
 CDO $combi $ecf
+
+#finding historical max
+tmp=$mdir/EcoIndex_${nam}_${obs}_${spc}_${fcs}_tmp.nc
+CDO fldmax $ecf $tmp
+set +e 
+emx=$( ncdump -v comp $tmp | tail -2 | head -1 | cut -d' ' -f3 ) 
+set -e
+#echo "CDO divc,$emx $ecf $tmp"
+CDO divc,$emx $ecf $tmp 
+mv $tmp $ecf
 
 endTime=$(date +"%s" -u)
 elapsed=$(date -u -d "0 $endTime seconds - $startTime seconds" +"%H:%M:%S")

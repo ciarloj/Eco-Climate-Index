@@ -41,9 +41,6 @@ begin
   ;; check basic statitics for data cleaning
   stato = new((/ncols,4/),typeof(valb))
   do c=3 , ncols -1
-;if ( c.eq.3 ) then
-;print(valo(c,:))
-;end if
     valx := valo(c,:)
     minx := min(valx)
     maxx := max(valx)
@@ -86,7 +83,7 @@ begin
 
     ;; fill missing values with the same manner as bootstrapping
     sortv := vals
-    qsort(vals)
+    qsort(sortv)
     nvals := dimsizes(vals)
     i=0
     do r=0 , nvals-1
@@ -152,8 +149,12 @@ begin
     vals := valb(c,:)
     avgs := avg(vals)
     stds := stddev(vals)  
-    do n=0 , nval-1 
-      valw(c,n) = (vals(n) - avgs )/ stds
+    do n=0 , nval-1
+      if ( stds.eq.0 .and. avgs.eq.0 ) then
+        valw(c,n) = vals(n)
+      else 
+        valw(c,n) = (vals(n) - avgs )/ stds
+      end if
     end do
     stat(c,0) = avgs
     stat(c,1) = stds

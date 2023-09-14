@@ -55,9 +55,9 @@ for c in $( seq 1 $ncomp ); do
     var=$( echo $line | cut -d, -f1 | cut -d'"' -f2 )
     fac=$( echo $line | cut -d, -f2 )
     if [ $var = orog -o $var = popdenmean ]; then
-      ivf=$( eval ls $idir/*_${var}_${nam}.nc )
+      ivf=$( eval ls $idir/*_${var}_${nam}_${spc}.nc )
     else
-      ivf=$( eval ls $idir/*_${var}_${nam}_${fcs}.nc )
+      ivf=$( eval ls $idir/*_${var}_${nam}_${fcs}_${spc}.nc )
     fi
     [[ $l = 2 ]] && CDO sub -chname,$var,comp $ivf -chname,$var,comp $ivf $of ## needs a base
     [[ $fac = NA ]] && continue

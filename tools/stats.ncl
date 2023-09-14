@@ -14,9 +14,16 @@ begin
   heads := lines(0)
   lines := lines(1:nrows-1)
 
+  hchar := stringtochar(heads)
+  if ( hchar(2).eq."," ) then
+    fdel = ","
+  else
+    fdel = " "
+  end if
+
   compt = new((/nrows/),"string")
   do l=0 , nrows-2
-    lsplt = str_split(lines(l),",")
+    lsplt = str_split(lines(l),fdel)
     compt(l) = lsplt(cn)
   end do
   compx = stringtofloat(compt)

@@ -4,7 +4,7 @@ set -eo pipefail
 
 nam=EOBS-010-v25e
 obs=iNaturalist
-spc=xylocopa-violacea
+spc=$2 #xylocopa-violacea
 
 if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then
   dat=RCMs
@@ -17,20 +17,19 @@ elif [ $nam = EOBS-010-v25e ]; then
   dat=OBS
   yrs=1985-2021
   fcs=1995-2014
-  vars="pr tas tasmax tasmin sfcWind orog popden"
+# vars="pr tas tasmax tasmin sfcWind orog popden"
+# vars="pr tas sfcWind orog popden"
+  vars="pr tas sfcWind orog"
 fi
 
 nobs=$( cat data/OBS/$obs/${spc}_${obs}.csv | wc -l )
-if [ $nobs -ge 1000 ]; then
-  nboot=1
-elif [ $nobs -lt 1000 -a $nobs -ge 500 ]; then
-  nboot=1000
-else
-  nboot=5000
-fi 
+ntrg=5000 # target number of observations (to reach with boot if required)
+nboot=$( echo "scale=4; $ntrg / $nobs" | bc ) 
+nboot=$( printf "%.0f\n" "$nboot" ) #round
+[[ $nboot -lt 1 ]] && nboot=1
 
 scr=$1
-
+dep=$3
 
 
 if [ $scr = main/run_all_indices.sh ]; then
@@ -49,7 +48,7 @@ if [ $scr = main/bootstrapping.sh ]; then
   j="boot_${spc}_${nam}"
   o=logs/${j}.out
   e=logs/${j}.err
-  slrm="-J $j -o $o -e $e"
+  slrm="-J $j -o $o -e $e $dep"
   jidb=$( sbatch $slrm main/bootstrapping.sh $nam $obs $spc $nboot $dat $fcs | cut -d' ' -f4 )
 fi
 
@@ -58,7 +57,7 @@ if [ $scr = main/pca.sh ]; then
   j="pca_${spc}_${nam}"
   o=logs/${j}.out
   e=logs/${j}.err
-  slrm="-J $j -o $o -e $e"
+  slrm="-J $j -o $o -e $e $dep"
   jidp=$( eval sbatch $slrm main/pca.sh $nam $obs $spc $nboot $dat $fcs | cut -d' ' -f4 )
 fi
 
@@ -67,9 +66,18 @@ if [ $scr = main/mahalonobis.sh ]; then
   j="mah_${spc}_${nam}"
   o=logs/${j}.out
   e=logs/${j}.err
-  slrm="-J $j -o $o -e $e -d afterok:$jidp"
+  slrm="-J $j -o $o -e $e $dep"
   jidl=$( eval sbatch $slrm main/mahalonobis.sh $nam $obs $spc $nboot $dat $fcs )
 fi  
+
+if [ $scr = main/nor-distance.sh ]; then
+  echo "submitting nor-distance..."
+  j="ndis_${spc}_${nam}"
+  o=logs/${j}.out
+  e=logs/${j}.err
+  slrm="-J $j -o $o -e $e $dep"
+  jidl=$( eval sbatch $slrm main/nor-distance.sh $nam $obs $spc $nboot $dat $fcs )
+fi
 
 echo "done."
 }

@@ -43,7 +43,7 @@ ncl -nQ $script | grep -v "$todouble"
 
 # standardize actual data
 echo "*** standardizing climate indices ***"
-dflog=$bdir/$( basename $flog .log ).csv
+dflog=$sdir/$( basename $flog .log )_stats.csv
 cols=$( head -1 $dflog )
 vars=$( head -1 $dflog | cut -d' ' -f4- )
 for v in $vars; do
@@ -61,7 +61,8 @@ for v in $vars; do
   else
     ivf=$( eval ls $cdir/*_${v}_${nam}_${fcs}.nc )
   fi
-  ovf=$sdir/$( basename $ivf )
+  ovf=$sdir/$( basename $ivf .nc )_${spc}.nc
+# echo "CDO divc,$stdv -subc,$avgv $ivf $ovf"
   CDO divc,$stdv -subc,$avgv $ivf $ovf
 done
 

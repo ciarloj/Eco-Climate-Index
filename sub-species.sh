@@ -17,17 +17,16 @@ elif [ $nam = EOBS-010-v25e ]; then
   dat=OBS
   yrs=1985-2021
   fcs=1995-2014
-  vars="pr tas tasmax tasmin sfcWind orog popden"
+# vars="pr tas tasmax tasmin sfcWind orog popden"
+# vars="pr tas sfcWind orog popden"
+  vars="pr tas sfcWind orog"
 fi
 
 nobs=$( cat data/OBS/$obs/${spc}_${obs}.csv | wc -l )
-if [ $nobs -ge 1000 ]; then
-  nboot=1
-elif [ $nobs -lt 1000 -a $nobs -ge 500 ]; then
-  nboot=1000
-else
-  nboot=5000
-fi 
+ntrg=5000 # target number of observations (to reach with boot if required)
+nboot=$( echo "scale=4; $ntrg / $nobs" | bc ) 
+nboot=$( printf "%.0f\n" "$nboot" ) #round
+[[ $nboot -lt 1 ]] && nboot=1
 
 echo "Running script for:"
 echo "  climate data = $nam ($fcs)"
@@ -37,10 +36,11 @@ echo "    with nboot = $nboot"
 echo ""
 echo "Select processes to run:"
 echo " - Run $nam indices preparations? [C]"
-echo " - Run $obs ENM processes?        [E]"
+echo " - Run $obs PCA ENM processes?    [P]"
+echo " - Run $obs classic ENM processes?[E]"
 read -p "Your selection:" sel
-if [ $sel != "C" -a $sel != "E" ]; then
-  echo "Incorrect Selection: $sel - must be C or E"
+if [ $sel != "C" -a $sel != "E" -a $sel != "P" ]; then
+  echo "Incorrect Selection: $sel - must be C, P, or E"
   exit 1
 fi
 
@@ -49,8 +49,8 @@ if [ $sel = C ]; then
   bash main/run_all_indices.sh $nam $dat $yrs $fcs "$vars"
 fi
 
-if [ $sel = E ]; then
-  echo "## Running Ecological Niche Model..."
+if [ $sel = P ]; then
+  echo "## Running PCA Ecological Niche Model..."
   echo "submitting read-and-log..."
   jidrl=$( bash main/submit_read-and-log.sh $nam $obs $spc $dat $fcs "$vars" | tail -1 | cut -d' ' -f4 )
 
@@ -77,4 +77,27 @@ if [ $sel = E ]; then
   
   echo "done."
 fi
+
+if [ $sel = E ]; then
+  echo "## Running Classic Ecological Niche Model..."
+  echo "submitting read-and-log..."
+  jidrl=$( bash main/submit_read-and-log.sh $nam $obs $spc $dat $fcs "$vars" | tail -1 | cut -d' ' -f4 )
+
+  echo "submitting bootstrap..."
+  j="boot_${spc}_${nam}"
+  o=logs/${j}.out
+  e=logs/${j}.err
+  slrm="-J $j -o $o -e $e -d afterok:$jidrl"
+  jidb=$( sbatch $slrm main/bootstrapping.sh $nam $obs $spc $nboot $dat $fcs | cut -d' ' -f4 )
+
+  echo "submitting nor-distance..."
+  j="ndis_${spc}_${nam}"
+  o=logs/${j}.out
+  e=logs/${j}.err
+  slrm="-J $j -o $o -e $e -d afterok:$jidb"
+  jidl=$( eval sbatch $slrm main/nor-distance.sh $nam $obs $spc $nboot $dat $fcs )
+
+  echo "done."
+fi
+
 }
