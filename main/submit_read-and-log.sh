@@ -12,9 +12,11 @@ dat=$4
 fcs=$5
 vars=$6
 
+ddep=$7 #optional dependency
+
 i=0
 for c in $csvs; do
-  [[ $i = 0 ]] && dep="" || dep="-d afterany:$jid"
+  [[ $i = 0 ]] && dep="$ddep" || dep="-d afterany:$jid"
   d=* #eur
 # [[ $c = armadillidium-granulatum ]] && d=medi
   cin=$( ls data/OBS/${b}/${c}_${b}.csv )

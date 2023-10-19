@@ -19,7 +19,7 @@ din=$hdir/data/$dat/$nam
 
 for v in $vars; do
   [[ $v = pr      ]] && indices="cdd r99 prsum"
-  [[ $v = tas     ]] && indices="hwfi cwfi tasmean"
+  [[ $v = tas     ]] && indices="tasp90 tasp10 tasmean" #"hwfi cwfi tasmean"
   [[ $v = tasmax  ]] && indices="tasmaxmax tasmaxmean"
   [[ $v = tasmin  ]] && indices="tasminmin tasminmean"
   [[ $v = sfcWind ]] && indices="fg6bft windmean"
@@ -31,6 +31,7 @@ for v in $vars; do
     [[ $i = hwfi   ]] && bs="slurm"
     [[ $i = cwfi   ]] && bs="slurm"
     [[ $i = fg6bft ]] && bs="slurm"
+    bs=slurm
     if [ $bs = "slurm" ]; then
       j=${i}_${nam}
       o=logs/${j}.o

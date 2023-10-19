@@ -49,7 +49,7 @@ echo "##########################################"
 
 header="# lat lon"
 v_pr="cdd r99 prsum"
-v_ts="hwfi cwfi tasmean"
+v_ts="tasp90 tasp10 tasmean" #"hwfi cwfi tasmean"
 v_tx="tasmaxmax tasmaxmean"
 v_tn="tasminmin tasminmean"
 v_mr="mrsomean"

@@ -1,10 +1,19 @@
 #!/bin/bash
+#SBATCH -J tas_tasp90 
+#SBATCH -o logs/tas_tasp90.o
+#SBATCH -e logs/tas_tasp90.e
+#SBATCH -t 24:00:00
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=jciarlo@ictp.it
+#SBATCH -p esp
+
 {
 set -eo pipefail
 startTime=$(date +"%s" -u)
 CDO(){
   cdo -O -L -f nc4 -z zip $@
 }
+
 ## Set inputs
 nam=$1 #MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6
 frq=$2 #day
@@ -20,38 +29,24 @@ y1=$( echo $fcs | cut -d- -f1 )
 y2=$( echo $fcs | cut -d- -f2 )
 dy=$(( $y2 - $y1 + 1 ))
 
-# extreme wet day precipitation (mm)
-# total precipitation above (inclusive) P99
-v=pr
-idx=r99
+# temperature mean 
+v=tas
+rr=90
+idx=tasp$rr 
 fin=$din/${v}_${nam}_${frq}_${yrs}.nc
+fsy=$dou/${v}_${idx}_${nam}_${fcs}_sy.nc
 fou=$dou/${v}_${idx}_${nam}_${fcs}.nc
-rr=$( echo $idx | cut -c2- )
 
 echo "##########################################"
 echo "## index = $idx($v)"
 echo "## data  = $nam"
 echo "##########################################"
-dsy=$din/.sy_${idx}
-dpp=$din/p$rr
-mkdir -p $dsy $dpp
-ftm=$dsy/$( basename $fin .nc )_sy.nc
-frr=$dpp/${v}_${nam}_${frq}_${fcs}_p${rr}.nc
-frx=$dpp/${v}_${nam}_${frq}_${fcs}_max.nx
-frn=$dpp/${v}_${nam}_${frq}_${fcs}_min.nc
 
-#CDO mulc,86400 -selyear,$y1/$y2 $fin $ftm
-set -e
-CDO setrtomiss,-Inf,0.9999 -selyear,$y1/$y2 $fin $ftm
-CDO timmax $ftm $frx
-CDO timmin $ftm $frn
-[[ ! -f $frr ]] && CDO timpctl,$rr $ftm $frn $frx $frr
-CDO chname,$v,$idx -divc,$dy -timsum -mul $ftm -ge $ftm $frr $fou
-ncatted -O -a long_name,$idx,m,c,"total_precipitation_ge_p$rr" $fou
-ncatted -O -a standard_name,$idx,m,c,"Yearly Mean Total Extreme(>/=P$rr) Precipitation" $fou
-ncatted -O -a units,$idx,m,c,"mm/year" $fou
-rm $ftm $frn $frx
-rmdir $dsy
+CDO chname,$v,$idx -selyear,$y1/$y2 $fin $fsy
+CDO timpctl,$rr $fsy -timmin $fsy -timmax $fsy $fou
+rm $fsy
+ncatted -O -a long_name,$idx,m,c,"p${rr}_air_temperature" $fou
+ncatted -O -a standard_name,$idx,m,c,"P$rr of Near-Surface Air Temperature" $fou
 
 endTime=$(date +"%s" -u)
 elapsed=$(date -u -d "0 $endTime seconds - $startTime seconds" +"%H:%M:%S")
@@ -59,6 +54,5 @@ echo "##########################################"
 echo "## Process complete!"
 echo "## Elapsed time = $elapsed"
 echo "##########################################"
-
 
 }

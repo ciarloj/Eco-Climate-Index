@@ -2,7 +2,7 @@
 {
 set -eo pipefail
 
-nam=EOBS-010-v25e
+nam=ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0_CP
 obs=iNaturalist
 spc=$1 #xylocopa-violacea
 
@@ -13,6 +13,11 @@ if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then
   vars="pr tas mrso sfcWind orog"
   echo $nam needs some script updates
   exit 1
+elif [ $nam = ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0_CP ]; then
+  dat=CPMs
+  yrs=1995-1999
+  fcs=$yrs
+  vars="pr tas sfcWind orog"
 elif [ $nam = EOBS-010-v25e ]; then
   dat=OBS
   yrs=1985-2021
