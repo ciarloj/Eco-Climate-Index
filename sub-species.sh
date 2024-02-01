@@ -2,31 +2,40 @@
 {
 set -eo pipefail
 
-nam=ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0_CP
+fcs=1980-2010
+dat=RCMs
+
+#nam=EOBS-010-v25e
 obs=iNaturalist
 spc=$1 #xylocopa-violacea
-dep=$2 #optional dependency
+nam=ECMWF-ERAINT_r1i1p1_EUR-11-ens-6 #EOBS-010-v25e
+#dep=$2 #optional dependency
 
-if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then
-  dat=RCMs
-  yrs=1970-2005
-  fcs=1986-2005
-  vars="pr tas mrso sfcWind orog"
-  echo $nam needs some script updates
-  exit 1
-elif [ $nam = ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0_CP ]; then
-  dat=CPMs
-  yrs=1995-1999
-  fcs=$yrs
+if [ $fcs = 1980-2010 ]; then
+  yrs=$fcs
   vars="pr tas sfcWind orog"
-elif [ $nam = EOBS-010-v25e ]; then
-  dat=OBS
-  yrs=1985-2021
-  fcs=1995-2014
-# vars="pr tas tasmax tasmin sfcWind orog popden"
-# vars="pr tas sfcWind orog popden"
-  vars="pr tas sfcWind orog"
+  [[ $nam = ECMWF-ERAINT_r1i1p1_RMIB-UGent-ALARO-0 ]] && vars="pr tas orog"
 fi
+#if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then
+#  dat=RCMs
+#  yrs=1970-2005
+#  fcs=1986-2005
+#  vars="pr tas mrso sfcWind orog"
+#  echo $nam needs some script updates
+#  exit 1
+#elif [ $nam = ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0_CP ]; then
+#  dat=CPMs
+#  yrs=1995-1999
+#  fcs=$yrs
+#  vars="pr tas sfcWind orog"
+#elif [ $nam = EOBS-010-v25e ]; then
+#  dat=OBS
+#  yrs=1980-2010
+#  fcs=$yrs
+## vars="pr tas tasmax tasmin sfcWind orog popden"
+## vars="pr tas sfcWind orog popden"
+#  vars="pr tas sfcWind orog"
+#fi
 
 nobs=$( cat data/OBS/$obs/${spc}_${obs}.csv | wc -l )
 ntrg=5000 # target number of observations (to reach with boot if required)

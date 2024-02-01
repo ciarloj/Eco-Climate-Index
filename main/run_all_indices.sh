@@ -6,6 +6,9 @@ set -eo pipefail
 nam=$1 #EOBS-010-v25e
 frq=day
 
+pp=esp 
+tt=3:00:00
+
 hdir=/home/netapp-clima-scratch/jciarlo/paleosim
 mdir=$hdir/main
 idir=$mdir/indices
@@ -37,7 +40,7 @@ for v in $vars; do
       o=logs/${j}.o
       e=logs/${j}.e
       echo '$$ Submitting '"$idir/${v}_${i}.sh"
-      sbatch -J $j -o $o -e $e -p esp -t 24:00:00 $idir/${v}_${i}.sh $nam $frq $yrs $fcs $din
+      sbatch -J $j -o $o -e $e -p $pp -t $tt $idir/${v}_${i}.sh $nam $frq $yrs $fcs $din
     elif [ $bs = "bash" ]; then
       echo '$$ Running '"$idir/${v}_${i}.sh"
       bash $idir/${v}_${i}.sh $nam $frq $yrs $fcs $din

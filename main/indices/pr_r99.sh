@@ -37,7 +37,7 @@ dpp=$din/p$rr
 mkdir -p $dsy $dpp
 ftm=$dsy/$( basename $fin .nc )_sy.nc
 frr=$dpp/${v}_${nam}_${frq}_${fcs}_p${rr}.nc
-frx=$dpp/${v}_${nam}_${frq}_${fcs}_max.nx
+frx=$dpp/${v}_${nam}_${frq}_${fcs}_max.nc
 frn=$dpp/${v}_${nam}_${frq}_${fcs}_min.nc
 
 #CDO mulc,86400 -selyear,$y1/$y2 $fin $ftm
@@ -45,7 +45,7 @@ set -e
 CDO setrtomiss,-Inf,0.9999 -selyear,$y1/$y2 $fin $ftm
 CDO timmax $ftm $frx
 CDO timmin $ftm $frn
-[[ ! -f $frr ]] && CDO timpctl,$rr $ftm $frn $frx $frr
+CDO timpctl,$rr $ftm $frn $frx $frr
 CDO chname,$v,$idx -divc,$dy -timsum -mul $ftm -ge $ftm $frr $fou
 ncatted -O -a long_name,$idx,m,c,"total_precipitation_ge_p$rr" $fou
 ncatted -O -a standard_name,$idx,m,c,"Yearly Mean Total Extreme(>/=P$rr) Precipitation" $fou

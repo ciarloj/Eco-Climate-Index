@@ -35,6 +35,7 @@ echo "## obs   = $obs"
 echo "## model = $nam"
 echo "##########################################"
 
+set -x
 olog=$odir/${spc}_${obs}_${nam}.log #original observations
 flog=$ndir/${spc}_${obs}_${nam}.csv #bootstrapped observations
 elog=$mdir/${spc}_${obs}_${nam}_${fcs}.ecolog #store stats for historical
