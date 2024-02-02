@@ -49,6 +49,7 @@ vo=cold_spell_days_index_wrt_10th_percentile_of_reference_period
 [[ -z $SLURM_JOB_ID ]] && rtyp="bash" || rtyp="slurm"
 
 frr=$dpp/${v}_${nam}_${frq}_${fcs}_p${rr}.nc
+if [ ! -f $frr ]; then
 for y in $( seq $y1 $y2 ); do
   echo "## preparing $y .."
   fyr=$dsy/${v}_${nam}_${frq}_${y}.nc
@@ -113,6 +114,7 @@ rm ${prf}???.nc
 echo "## merging.."
 CDO mergetime $dpp/${v}_${nam}_${frq}_???_${rr}p.nc $frr >/dev/null
 rm $dpp/${v}_${nam}_${frq}_???_${rr}p.nc
+fi
 
 for y in $( seq $y1 $y2 ); do
   echo "## ${rr}p at $y .."

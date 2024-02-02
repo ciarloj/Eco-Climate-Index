@@ -7,7 +7,7 @@ nam=$1 #EOBS-010-v25e
 frq=day
 
 pp=esp 
-tt=3:00:00
+tt=10:00:00
 
 hdir=/home/netapp-clima-scratch/jciarlo/paleosim
 mdir=$hdir/main
@@ -21,8 +21,8 @@ vars=$5 #"pr tas tasmax tasmin sfcWind orog popden"
 din=$hdir/data/$dat/$nam
 
 for v in $vars; do
-  [[ $v = pr      ]] && indices="cdd r99 prsum"
-  [[ $v = tas     ]] && indices="tasp90 tasp10 tasmean" #"hwfi cwfi tasmean"
+  [[ $v = pr      ]] && indices="r10mm r20mm rx1day rx5day nrx5day" #"cdd r99 prsum"
+  [[ $v = tas     ]] && indices="tx90p tx10p" #"tasp90 tasp10 tasmean" #"hwfi cwfi tasmean"
   [[ $v = tasmax  ]] && indices="tasmaxmax tasmaxmean"
   [[ $v = tasmin  ]] && indices="tasminmin tasminmean"
   [[ $v = sfcWind ]] && indices="fg6bft windmean"

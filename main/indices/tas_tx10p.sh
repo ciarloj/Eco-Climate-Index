@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH -J tas_hwfi
-#SBATCH -o logs/tas_hwfi.o
-#SBATCH -e logs/tas_hwfi.e
+#SBATCH -J tas_cwfi
+#SBATCH -o logs/tas_cwfi.o
+#SBATCH -e logs/tas_cwfi.e
 #SBATCH -t 24:00:00
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=jciarlo@ictp.it
@@ -32,19 +32,18 @@ dy=$(( $y2 - $y1 + 1 ))
 # heat wave frequency index - 6 consec day with warm days above 90th percentile 
 # 90th percentile of 5-yearly day period
 v=tas
-idx=hwfi 
+rr=10
+idx=tx${rr}p
 fin=$din/${v}_${nam}_${frq}_${yrs}.nc
 fou=$dou/${v}_${idx}_${nam}_${fcs}.nc
-rr=90
 
 echo "##########################################"
 echo "## index = $idx($v)"
 echo "## data  = $nam"
 echo "##########################################"
-dsy=$din/.sy_${idx}
 dpp=$din/p$rr
-mkdir -p $dsy $dpp
-vo=warm_spell_days_index_wrt_90th_percentile_of_reference_period
+mkdir -p $dpp
+vo=very_cold_days_percent_wrt_10th_percentile_of_reference_period
 
 [[ -z $SLURM_JOB_ID ]] && rtyp="bash" || rtyp="slurm"
 
@@ -116,22 +115,25 @@ CDO mergetime $dpp/${v}_${nam}_${frq}_???_${rr}p.nc $frr >/dev/null
 rm $dpp/${v}_${nam}_${frq}_???_${rr}p.nc
 fi
 
-for y in $( seq $y1 $y2 ); do
-  echo "## ${rr}p at $y .."
-  fty=$dsy/${v}_${nam}_${frq}_${y}_${dn}.nc
-  ftg=$dsy/$( basename $fou .nc)_${y}-hwfi.nc
-  CDO eca_hwfi,6 $fty $frr $ftg >/dev/null
-  rm $fty
-done
-echo "## finalizing result."
-files=$dsy/$( basename $fou .nc)_????-hwfi.nc
-CDO chname,$vo,$idx -selvar,$vo -divc,$dy -timsum -mergetime $files $fou >/dev/null
-ncatted -O -a long_name,$idx,m,c,"yearly_mean_heat_wave_frequency_index" $fou
-ncatted -O -a standard_name,$idx,m,c,"Yearly Mean 6+ Consecutive days above 5-day 90p temperature" $fou
-ncatted -O -a units,$idx,m,c,"days/year" $fou
-rm $dsy/$( basename $fou .nc)_????-hwfi.nc
+ftm=$fin
+if [ $yrs != $fcs ]; then
+  dsy=$din/.sy_${idx}
+  mkdir -p $dsy
+  ftm=$dsy/$( basename $fin .nc )_sy.nc
+  CDO selyear,$y1/$y2 $fin $ftm
+fi
 
-rmdir $dsy
+drr=${frr}_dup.nc
+trr=${frr}_time.nc
+CDO duplicate,$dy $frr $drr
+ncks -v time $ftm $trr
+ncks -A -v time $trr $drr
+rm $trr 
+CDO chname,$vo,$idx -eca_tx${rr}p $ftm $drr $fou
+rm $drr
+
+[[ $yrs != $fcs ]] && rm $ftm
+[[ $yrs != $fcs ]] && rmdir $dsy
 
 endTime=$(date +"%s" -u)
 elapsed=$(date -u -d "0 $endTime seconds - $startTime seconds" +"%H:%M:%S")

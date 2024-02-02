@@ -7,13 +7,14 @@ dat=RCMs
 
 #nam=EOBS-010-v25e
 obs=iNaturalist
-spc=$1 #xylocopa-violacea
-nam=ECMWF-ERAINT_r1i1p1_EUR-11-ens-6 #EOBS-010-v25e
+spc=spilostethus-pandurus #$1 #xylocopa-violacea
+nam=ECMWF-ERAINT_r1i1p1_SMHI-RCA4 #ECMWF-ERAINT_r1i1p1_ICTP-RegCM4-6 #ECMWF-ERAINT_r1i1p1_EUR-11-ens-6 #EOBS-010-v25e
 #dep=$2 #optional dependency
 
 if [ $fcs = 1980-2010 ]; then
   yrs=$fcs
   vars="pr tas sfcWind orog"
+vars="tas pr"
   [[ $nam = ECMWF-ERAINT_r1i1p1_RMIB-UGent-ALARO-0 ]] && vars="pr tas orog"
 fi
 #if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then

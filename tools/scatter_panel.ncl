@@ -76,7 +76,7 @@ begin
         res@xyMarkerColor       = "red"                  ; Marker color
         res@xyMarkerSizeF       = 0.004                  ; Marker size (default 0.01)
         res@xyDashPatterns      = 0                      ; solid line
-        res@xyLineThicknessF    = 1                      ; set second line to 2
+        res@xyLineThicknessF    = 2                      ; set second line to 2
         res@tiXAxisString       = xnam
         res@tiYAxisString       = ynam+" PDF(%)"
         res@trXMinF = ymin
@@ -92,7 +92,7 @@ begin
       ; y = mx+b 
       ; m is the slope:       rc      returned from regline
       ; b is the y intercept: rc@yave attribute of rc returned from regline
-        data(1,:) = rc*(x) + rc@yave 
+        data(1,:) = rc*(x-rc@xave) + rc@yave 
 
         res                     = True                   ; plot mods desired
         res@gsnDraw  = False                          ; don't draw
