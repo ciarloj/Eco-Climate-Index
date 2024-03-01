@@ -35,7 +35,6 @@ echo "## obs   = $obs"
 echo "## model = $nam"
 echo "##########################################"
 
-set -x
 olog=$odir/${spc}_${obs}_${nam}.log #original observations
 flog=$ndir/${spc}_${obs}_${nam}.csv #bootstrapped observations
 elog=$mdir/${spc}_${obs}_${nam}_${fcs}.ecolog #store stats for historical
@@ -52,6 +51,10 @@ export ncomp=$nv
 
 c=0
 combi=""
+if [ $nam = EOBS-010-v25e ]; then
+  ifwind=$( echo $vars | grep windmean )
+  [[ -z $ifwnd ]] && vars=$vars || vars="$( echo $vars | sed s/windmean// ) windmean"
+fi
 for v in $vars; do
   c=$(( $c + 1 ))
   echo "--- $v ---"
@@ -83,12 +86,30 @@ for v in $vars; do
   else
     combi="${combi} $ouf"
   fi
+  touf=$mdir/EcoTemp_${nam}_${obs}_${spc}_${fcs}.nc
+  nouf=$mdir/EcoNext_${nam}_${obs}_${spc}_${fcs}.nc
+  [[ $c = 1 ]] && pouf=$ouf
+  if [ $v = windmean -a $nam = EOBS-010-v25e ]; then
+    [[ $c > 1 ]] && CDO mul -ifthen -gec,-111 $ouf $pouf $ouf $touf && mv $touf $nouf && pouf=$nouf
+  else
+    [[ $c > 1 ]] && CDO mul $pouf $ouf $touf && mv $touf $nouf && pouf=$nouf
+  fi
 done
 
 echo "## combining ..."
 ecf=$mdir/EcoIndex_${nam}_${obs}_${spc}_${fcs}.nc
 #echo "CDO $combi $ecf"
-CDO $combi $ecf
+#CDO $combi $ecf
+mv $pouf $ecf
+if [ $nam = EOBS-010-v25e ]; then
+  ifwind=$( echo $vars | grep windmean )
+  if [ -z $ifwnd ]; then
+    touf=$mdir/EcoTemp_${nam}_${obs}_${spc}_${fcs}.nc
+    wouf=$mdir/windmean_${nam}_${obs}_${spc}_${fcs}.nc
+    CDO ifthen -gec,-111 $wouf $ecf $touf
+    mv $touf $ecf
+  fi
+fi
 
 #find historical max at lat/lon of observations
 nobs=$( cat $olog | wc -l )

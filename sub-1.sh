@@ -2,7 +2,7 @@
 {
 set -eo pipefail
 
-nam=ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0_CP
+nam=ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0-BATS_CP
 obs=iNaturalist
 spc=$2 #xylocopa-violacea
 
@@ -18,6 +18,11 @@ elif [ $nam = ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0_CP ]; then
   yrs=1995-1999
   fcs=$yrs
   vars="pr tas sfcWind orog"
+elif [ $nam = ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0-BATS_CP ]; then
+  dat=CPMs
+  vars="pr tas sfcWind orog"
+  fcs=1995-2004
+  yrs=$fcs
 elif [ $nam = EOBS-010-v25e ]; then
   dat=OBS
   yrs=1980-2010

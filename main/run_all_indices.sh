@@ -21,8 +21,8 @@ vars=$5 #"pr tas tasmax tasmin sfcWind orog popden"
 din=$hdir/data/$dat/$nam
 
 for v in $vars; do
-  [[ $v = pr      ]] && indices="r10mm r20mm rx1day rx5day nrx5day" #"cdd r99 prsum"
-  [[ $v = tas     ]] && indices="tx90p tx10p" #"tasp90 tasp10 tasmean" #"hwfi cwfi tasmean"
+  [[ $v = pr      ]] && indices="cdd rx1day prsum" #"r10mm r20mm rx5day nrx5day" #"r99"
+  [[ $v = tas     ]] && indices=hwfi #"cwfi hwfi tasmean" #"tasp90 tasp10 tasmean" #"hwfi cwfi tasmean"
   [[ $v = tasmax  ]] && indices="tasmaxmax tasmaxmean"
   [[ $v = tasmin  ]] && indices="tasminmin tasminmean"
   [[ $v = sfcWind ]] && indices="fg6bft windmean"

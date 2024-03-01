@@ -7,15 +7,28 @@ dat=RCMs
 
 #nam=EOBS-010-v25e
 obs=iNaturalist
-spc=spilostethus-pandurus #$1 #xylocopa-violacea
-nam=ECMWF-ERAINT_r1i1p1_SMHI-RCA4 #ECMWF-ERAINT_r1i1p1_ICTP-RegCM4-6 #ECMWF-ERAINT_r1i1p1_EUR-11-ens-6 #EOBS-010-v25e
+spc=$1 #xylocopa-violacea
+nam=EOBS-010-v25e #ECMWF-ERAINT_r1i1p1_EUR-11-ens-6 #EOBS-010-v25e
+nam=ECMWF-ERAINT_r1i1p1_EUR-11-ens-6
+nam=ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0-BATS_CP
+#nam=$1 #ECMWF-ERAINT_r1i1p1_SMHI-RCA4
+dat=RCMs
+[[ $nam = EOBS-010-v25e ]] && dat=OBS
 #dep=$2 #optional dependency
 
 if [ $fcs = 1980-2010 ]; then
   yrs=$fcs
   vars="pr tas sfcWind orog"
-vars="tas pr"
-  [[ $nam = ECMWF-ERAINT_r1i1p1_RMIB-UGent-ALARO-0 ]] && vars="pr tas orog"
+fi
+if [ $nam = EOBS-010-v25e ]; then
+  dat=OBS
+  vars="pr tas sfcWind orog"
+fi
+if [ $nam = ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0-BATS_CP ]; then
+  dat=CPMs
+  vars="pr tas sfcWind orog"
+  fcs=1995-2004
+  yrs=$fcs
 fi
 #if [ $nam = MOHC-HadGEM2-ES_r1i1p1_ICTP-RegCM4-6 ]; then
 #  dat=RCMs
@@ -44,21 +57,27 @@ nboot=$( echo "scale=4; $ntrg / $nobs" | bc )
 nboot=$( printf "%.0f\n" "$nboot" ) #round
 [[ $nboot -lt 1 ]] && nboot=1
 
-echo "Running script for:"
-echo "  climate data = $nam ($fcs)"
-echo "  species data = $obs"
-echo "  species      = $spc"
-echo "    with nboot = $nboot"
-echo ""
-echo "Select processes to run:"
-echo " - Run $nam indices preparations? [C]"
-echo " - Run $obs PCA ENM processes?    [P]"
-echo " - Run $obs classic ENM processes?[E]"
-read -p "Your selection:" sel
-if [ $sel != "C" -a $sel != "E" -a $sel != "P" ]; then
-  echo "Incorrect Selection: $sel - must be C, P, or E"
-  exit 1
+am=auto
+if [ $am = manual ]; then
+  echo "Running script for:"
+  echo "  climate data = $nam ($fcs)"
+  echo "  species data = $obs"
+  echo "  species      = $spc"
+  echo "    with nboot = $nboot"
+  echo ""
+  echo "Select processes to run:"
+  echo " - Run $nam indices preparations? [C]"
+  echo " - Run $obs PCA ENM processes?    [P]"
+  echo " - Run $obs classic ENM processes?[E]"
+  read -p "Your selection:" sel
+  if [ $sel != "C" -a $sel != "E" -a $sel != "P" ]; then
+    echo "Incorrect Selection: $sel - must be C, P, or E"
+    exit 1
+  fi
+else
+  sel=E
 fi
+
 
 if [ $sel = C ]; then
   echo "## Running Climate indices..."

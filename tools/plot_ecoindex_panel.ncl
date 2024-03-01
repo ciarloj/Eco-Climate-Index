@@ -27,10 +27,10 @@ begin
   nspc = dimsizes(spclist)
 
   dp = getenv("dp")
-  drawPoints = False
-  if ( dp.eq."true" ) then
+; drawPoints = False
+; if ( dp.eq."true" ) then
     drawPoints = True 
-  end if
+; end if
   drawSummary = False
   if ( dp.eq."summary" ) then
     drawSummary = True
@@ -46,6 +46,9 @@ begin
     if ( regi.eq."ICTP-RegCM5-0" ) then
       rmod = "RegCM5"
     end if
+    if ( regi.eq."ICTP-RegCM5-0-BATS" ) then
+      rmod = "RegCM5-BATS"
+    end if
     dshort = gmod+"-"+rmod
   end if
   if ( dtyp .eq. "OBS" ) then
@@ -58,9 +61,13 @@ begin
   idir  = hdir+"/images/"
   outim = idir+"EcoIndex_"+dnam+"_"+onam+"_"+yrs+"_panel"
   formo = "png"
+  imgres = 2500
+  formo@wkWidth = imgres
+  formo@wkHeight = imgres
   wks   = gsn_open_wks (formo,outim)             ; send graphics to PNG file
 
   plot = new(nspc,graphic)
+  dumP = new(nspc,graphic)
 
   do n=0 , nspc-1
     spc   = spclist(n)
@@ -87,8 +94,8 @@ begin
 
       hchar := stringtochar(heads)
       fdel = " "
-      ilon := new((/nrows/),"string")
-      ilat := new((/nrows/),"string")
+      ilon := new((/nrows-1/),"string")
+      ilat := new((/nrows-1/),"string")
       do l=0 , nrows-2
         lsplt = str_split(lines(l),fdel)
         ilon(l) = lsplt(2)
@@ -103,33 +110,40 @@ begin
       nlrows = numAsciiRow(elfil)
       elines := asciiread(elfil,(/nlrows/),"string")
       evals := elines(1:nlrows-1)
-      eavg = avg(stringtofloat(evals))
-      estd = stddev(stringtofloat(evals))
+      evals := where(evals.eq."_",evals@_FillValue,evals)
 
       if ( drawSummary ) then
         nvals = dimsizes(lines)
+        nvald = num(.not.ismissing(evals)) ;number of valid points
+ 
         th1 = 0.1
-        th2 = 0.5
-        cl = 0
-        cm = 0
-        do l=0 , nvals-1 
-          thisval = evals(l)
-          if ( thisval.ge.th1 ) then
-            cl = cl + 1
-          end if
-          if ( thisval.ge.th2 ) then
-            cm = cm + 1 
-          end if
-        end do
-
-        pcl = cl*100./nvals
-        pcm = cm*100./nvals
+        cl = num(evals.ge.th1)
+        if ( nvald.eq.0 ) then
+          pcl = 0.
+        else
+          pcl = cl*100./nvald
+        end if
       end if
+
+      ilon = where(ismissing(evals),ilon@_FillValue,ilon)
+      ilat = where(ismissing(evals),ilat@_FillValue,ilat)
+      ilon = where(evals.lt.th1,ilon,ilon@_FillValue)
+      ilat = where(evals.lt.th1,ilat,ilat@_FillValue)
+
+    ; print("Logging missed points...")
+    ; print(">>> evals ilat ilon")
+    ; print(">>> "+evals+" "+ilat+" "+ilon)
+
     end if
 
     if ( tdim.eq."2d" ) then
-      xlat = f->lat
-      xlon = f->lon
+      if ( dtyp .eq. "CPMs" ) then
+        xlat = f->xlat
+        xlon = f->xlon
+      else 
+        xlat = f->lat
+        xlon = f->lon
+      end if 
 ;     rpol = f->rotated_latitude_longitude
 ;     plat = rpol@grid_north_pole_latitude
 ;     plon = rpol@grid_north_pole_longitude
@@ -154,20 +168,21 @@ begin
    ;***********************
 
     res  = True
-;   if ( drawPoints.eq.True ) then
-      res@gsnDraw             = False
-      res@gsnFrame            = False            
-;   else
-;     res@gsnDraw             = True              ; don't draw yet
-;     res@gsnFrame            = True              ; don't advance frame yet
-;   end if
+    res@gsnDraw             = False
+    res@gsnFrame            = False            
 
     res@mpLimitMode       = "Corners"            ; choose range of map
     res@tfDoNDCOverlay         = True      ; do not transform
     region = "Domain"
     if ( tdim.eq."2d" ) then
       res@tfDoNDCOverlay        = False      ; do not transform
-     ;res@mpProjection        = "CylindricalEquidistant"
+      dlon = 0.
+      dlat = 0.
+      if ( dtyp .eq. "RCMs" ) then
+        dlon = 8.25
+        dlat = 1.5
+      end if
+
       dllon = 0
       dllat = 0
       drlon = 0
@@ -178,14 +193,8 @@ begin
         res@mpRightCornerLatF = xlat(nlat-1,nlon-1) + drlat
         res@mpRightCornerLonF = xlon(nlat-1,nlon-1) + drlon
       end if
-      if ( region.eq."Mediterranean" ) then
-        res@mpLeftCornerLatF  =  31.878244
-        res@mpLeftCornerLonF  = -11.569858
-        res@mpRightCornerLatF = xlat(nlat-1,nlon-1) + drlat
-        res@mpRightCornerLonF = xlon(nlat-1,nlon-1) + drlon
-      end if
-      res@mpCenterLonF = xlon(nlat/2,nlon/2) 
-      res@mpCenterLatF = xlat(nlat/2,nlon/2)
+      res@mpCenterLonF = xlon(nlat/2,nlon/2) + dlon 
+      res@mpCenterLatF = xlat(nlat/2,nlon/2) + dlat
 ;     if (prj .eq. "LAMCON") then
 ;       trlats = f@standard_parallel
 ;       res@mpProjection        = "LambertConformal"
@@ -210,13 +219,6 @@ begin
         res@mpRightCornerLatF = max(xlat)
         res@mpRightCornerLonF = max(xlon)
       end if
-      if ( region.eq."Mediterranean" ) then
-        res@tfDoNDCOverlay    = False      ; do not transform
-        res@mpLeftCornerLatF  =  31.878244
-        res@mpLeftCornerLonF  =  11.569858
-        res@mpRightCornerLatF =  57.683023
-        res@mpRightCornerLonF =  42.361506
-      end if
     end if
 
   ; usually, when data is placed onto a map, it is TRANSFORMED to the specified
@@ -226,54 +228,30 @@ begin
     res@cnFillOn               = True      ; color plot desired
     res@cnFillMode             = "RasterFill"
     res@cnLinesOn              = False       ; no contour lines
+    res@cnLineLabelsOn         = False       ; no contour line labels
     res@mpFillOn               = False
 
     res@mpGeophysicalLineColor = "black"     ; color of continental outlines
     res@mpPerimOn              = True      ; draw box around map
     res@mpGridLineDashPattern  = 5         ; lat/lon lines as dashed
 
-;   res@gsnAddCyclic           = False     ; regional data don't add
-;   res@pmTickMarkDisplayMode  = "Always"  ;
     res@mpGridAndLimbOn        = False               ; turn on grid lines
     res@lbLabelBarOn           = False
-;   res@lbOrientation          =   "vertical"
-;  ;res@lbLabelFontHeightF   = 0.02
-;   res@lbTitleFontHeightF   = 0.018                ; make title smaller
-;   res@lbTitleString    = "EI (#)"
-;  ;res@lbTitlePosition      = "Top"
     res@tmYROn = False            ; Turn off right tickmarks.
     res@tmXTOn = False            ; Turn off top tickmarks.
     res@tmYLOn = False
     res@tmXBOn = False
     res@gsnLeftString          = "" 
-    if ( drawPoints.eq.True ) then
-      res@gsnRightString         = "~F33~m="+eavg+"~C~~F33~s="+estd
-    else
-      if ( drawSummary.eq.True ) then
-        prcl = decimalPlaces(pcl,1,True)
-        prcm = decimalPlaces(pcm,1,True)
-        res@gsnRightString         = "%>0.1="+prcl+"~C~%>0.5="+prcm
-      ; res@gsnRightString         = "%>0.1="+prcl+"; %>0.5="+prcm
-      else
-        res@gsnRightString         = ""
-      end if
-    end if
-;   res@gsnLeftStringFontHeightF  = 0.01
-    res@gsnRightStringFontHeightF = 0.01
-    if ( drawSummary.eq.True ) then
-      res@gsnCenterString        = spc_t
-    else
-      res@tiMainOn = True
-      res@tiMainString = spc_t
-      res@gsnCenterString        = dshort+" ("+yrs+")"  
-    end if
+    prcl = decimalPlaces(pcl,1,True)
+    res@gsnRightString         = "%>0.1="+sprintf("%5.1f",prcl) ;+"~C~%>0.5="+prcm
+    res@gsnRightStringFontHeightF = 0.015
+    res@gsnCenterString        = spc_t
     res@mpDataBaseVersion    = "HighRes"
 
     res@cnLevelSelectionMode   = "ExplicitLevels"
 ;   res@cnConstFLabelFormat    = "0f1"
     res@cnLevels = (/.1,.2,.3,.4,.5,.6,.7,.8,.9,1/) 
     cmap = read_colormap_file("WhiteBlueGreenYellowRed")
-;   cmap = cmap(::-1,:) ; reverse the color map
     res@cnFillPalette = cmap
 
     if ( drawPoints.eq.False ) then
@@ -286,12 +264,10 @@ begin
     if ( drawPoints.eq.True ) then 
       polyres                   = True
       polyres@gsMarkerIndex     = 16          ; polymarker style
-      polyres@gsMarkerSizeF     = 3.          ; polymarker size
+      polyres@gsMarkerSizeF     = 1.4         ; polymarker size
 
       plot(n) = gsn_csm_contour_map_ce(wks,ei,res)
-      dumP   = gsn_add_polymarker(wks,plot(n),ilon(:),ilat(:),polyres)
-;     draw(plot)
-;     frame(wks)
+      dumP(n) = gsn_add_polymarker(wks,plot(n),ilon(:),ilat(:),polyres)
     end if
   end do
 

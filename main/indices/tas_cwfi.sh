@@ -49,7 +49,7 @@ vo=cold_spell_days_index_wrt_10th_percentile_of_reference_period
 [[ -z $SLURM_JOB_ID ]] && rtyp="bash" || rtyp="slurm"
 
 frr=$dpp/${v}_${nam}_${frq}_${fcs}_p${rr}.nc
-if [ ! -f $frr ]; then
+#if [ ! -f $frr ]; then
 for y in $( seq $y1 $y2 ); do
   echo "## preparing $y .."
   fyr=$dsy/${v}_${nam}_${frq}_${y}.nc
@@ -58,8 +58,29 @@ for y in $( seq $y1 $y2 ); do
   d=$( ncdump -h $fyr | grep -i time | head -1 | cut -d'(' -f2 | cut -d' ' -f1 )
   set -e
   if [ $d != 360 -a $d != 365 -a $d != 366 ]; then
-    echo "Calendar Error! d="$d
-    exit 1
+    if [ $d = 364 ]; then
+      # some simulations started from day 02
+      # check if first timestep is day 02
+      ts1=$dsy/${v}_${nam}_${frq}_${y}_ts1.nc
+      CDO seltimestep,1 $fyr $ts1
+      dck=$( ncdump -v time -t $ts1 | tail -2 | head -1 | cut -d'"' -f2 | cut -d- -f3 )
+      if [ $dck = 02 ]; then
+      # replicating day 1 for these cases
+        ts1s=$dsy/${v}_${nam}_${frq}_${y}_ts1s.nc
+        CDO setday,01 $ts1 $ts1s
+        rm $ts1
+        CDO mergetime $ts1s $fyr ${fyr}_mod.nc
+        mv ${fyr}_mod.nc $fyr
+        d=365 
+     else
+        rm $ts1
+        echo "Calendar Error! y=$y d="$d
+        exit 1
+      fi
+    else
+      echo "Calendar Error! y=$y d="$d
+      exit 1
+    fi
   fi
   if [ $d -gt 365 ]; then
     echo "trimming $y.."
@@ -114,7 +135,7 @@ rm ${prf}???.nc
 echo "## merging.."
 CDO mergetime $dpp/${v}_${nam}_${frq}_???_${rr}p.nc $frr >/dev/null
 rm $dpp/${v}_${nam}_${frq}_???_${rr}p.nc
-fi
+#fi
 
 for y in $( seq $y1 $y2 ); do
   echo "## ${rr}p at $y .."

@@ -41,10 +41,16 @@ echo "##########################################"
 echo "## index = $idx($v)"
 echo "## data  = $nam"
 echo "##########################################"
+dsy=$din/.sy_${idx}
 dpp=$din/p$rr
-mkdir -p $dpp
+mkdir -p $dpp $dsy
 vo=very_warm_days_percent_wrt_90th_percentile_of_reference_period
 
+ftm=$fin
+if [ $yrs != $fcs ]; then
+  ftm=$dsy/$( basename $fin .nc )_sy.nc
+  CDO selyear,$y1/$y2 $fin $ftm
+fi
 [[ -z $SLURM_JOB_ID ]] && rtyp="bash" || rtyp="slurm"
 
 frr=$dpp/${v}_${nam}_${frq}_${fcs}_p${rr}.nc
@@ -115,14 +121,6 @@ CDO mergetime $dpp/${v}_${nam}_${frq}_???_${rr}p.nc $frr >/dev/null
 rm $dpp/${v}_${nam}_${frq}_???_${rr}p.nc
 fi
 
-ftm=$fin
-if [ $yrs != $fcs ]; then
-  dsy=$din/.sy_${idx}
-  mkdir -p $dsy
-  ftm=$dsy/$( basename $fin .nc )_sy.nc
-  CDO selyear,$y1/$y2 $fin $ftm
-fi
-
 drr=${frr}_dup.nc
 trr=${frr}_time.nc
 CDO duplicate,$dy $frr $drr
@@ -133,7 +131,7 @@ CDO chname,$vo,$idx -eca_tx${rr}p $ftm $drr $fou
 rm $drr
 
 [[ $yrs != $fcs ]] && rm $ftm
-[[ $yrs != $fcs ]] && rmdir $dsy
+rmdir $dsy
 
 endTime=$(date +"%s" -u)
 elapsed=$(date -u -d "0 $endTime seconds - $startTime seconds" +"%H:%M:%S")

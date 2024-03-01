@@ -39,6 +39,9 @@ begin
     if ( regi.eq."ICTP-RegCM5-0" ) then
       rmod = "RegCM5"
     end if
+    if ( regi.eq."ICTP-RegCM5-0-BATS" ) then
+      rmod = "RegCM5-BATS"
+    end if
     dshort = gmod+"-"+rmod
   end if
   if ( dtyp .eq. "OBS" ) then
@@ -79,11 +82,17 @@ begin
     end if
 
     if ( tdim.eq."2d" ) then
-      xlat = f->lat
-      xlon = f->lon
-;     rpol = f->rotated_latitude_longitude
-;     plat = rpol@grid_north_pole_latitude
-;     plon = rpol@grid_north_pole_longitude
+      if ( dtyp .eq. "CPMs" ) then
+        xlat = f->xlat
+        xlon = f->xlon
+      else
+        xlat = f->lat
+        xlon = f->lon
+      end if
+      rpol := f->rotated_pole ;rotated_latitude_longitude
+      plat = 48.  ;rpol@grid_north_pole_latitude
+      plon = 9.75 ;rpol@grid_north_pole_longitude
+
       vi@lat2d = xlat
       vi@lon2d = xlon
       dims = dimsizes(xlat)
@@ -110,28 +119,29 @@ begin
 
     res@mpLimitMode       = "Corners"            ; choose range of map
     res@tfDoNDCOverlay         = True      ; do not transform
-    region = "Domain"
+;   region = "Domain"
     if ( tdim.eq."2d" ) then
       res@tfDoNDCOverlay        = False      ; do not transform
-     ;res@mpProjection        = "CylindricalEquidistant"
+      dlon = 0.
+      dlat = 0.
+      if ( dtyp .eq. "RCMs" ) then
+        dlon = 8.25
+        dlat = 1.5
+      end if
+
       dllon = 0
       dllat = 0
       drlon = 0
       drlat = 0
-      if ( region.eq."Domain" ) then
+;    if ( region.eq."Domain" ) then
         res@mpLeftCornerLatF  = xlat(0,0) + dllat
         res@mpLeftCornerLonF  = xlon(0,0) + dllon
         res@mpRightCornerLatF = xlat(nlat-1,nlon-1) + drlat
         res@mpRightCornerLonF = xlon(nlat-1,nlon-1) + drlon
-      end if
-      if ( region.eq."Mediterranean" ) then
-        res@mpLeftCornerLatF  =  31.878244
-        res@mpLeftCornerLonF  = -11.569858
-        res@mpRightCornerLatF = xlat(nlat-1,nlon-1) + drlat
-        res@mpRightCornerLonF = xlon(nlat-1,nlon-1) + drlon
-      end if
-      res@mpCenterLonF = xlon(nlat/2,nlon/2) 
-      res@mpCenterLatF = xlat(nlat/2,nlon/2)
+;     end if
+      res@mpCenterLonF = xlon(nlat/2,nlon/2) + dlon
+      res@mpCenterLatF = xlat(nlat/2,nlon/2) + dlat
+
 ;     if (prj .eq. "LAMCON") then
 ;       trlats = f@standard_parallel
 ;       res@mpProjection        = "LambertConformal"
@@ -150,19 +160,12 @@ begin
 ;     end if
     end if
     if ( tdim.eq."1d" ) then
-      if ( region.eq."Domain" ) then
+ ;    if ( region.eq."Domain" ) then
         res@mpLeftCornerLatF  = min(xlat)
         res@mpLeftCornerLonF  = min(xlon)
         res@mpRightCornerLatF = max(xlat)
         res@mpRightCornerLonF = max(xlon)
-      end if
-      if ( region.eq."Mediterranean" ) then
-        res@tfDoNDCOverlay    = False      ; do not transform
-        res@mpLeftCornerLatF  =  31.878244
-        res@mpLeftCornerLonF  =  11.569858
-        res@mpRightCornerLatF =  57.683023
-        res@mpRightCornerLonF =  42.361506
-      end if
+ ;    end if
     end if
 
   ; usually, when data is placed onto a map, it is TRANSFORMED to the specified
@@ -172,6 +175,7 @@ begin
     res@cnFillOn               = True      ; color plot desired
     res@cnFillMode             = "RasterFill"
     res@cnLinesOn              = False       ; no contour lines
+    res@cnLineLabelsOn         = False       ; no contour line labels
     res@mpFillOn               = False
 
     res@mpGeophysicalLineColor = "black"     ; color of continental outlines

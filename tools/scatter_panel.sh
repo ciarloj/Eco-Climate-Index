@@ -6,12 +6,13 @@ CDO(){
 }
 
 hdir=/home/netapp-clima-scratch/jciarlo/paleosim
-export dnam=ECMWF-ERAINT_r1i1p1_EUR-11-ens-6
+export dnam=EOBS-010-v25e
 export onam=iNaturalist
 export odir=$hdir/images
 mkdir -p $odir
 
 spclist="ameles-decolor argiope-lobata brachytrupes-megacephalus polyommatus-celina scarabaeus-variolosus selysiothemis-nigra spilostethus-pandurus xylocopa-violacea"
+spclist=spilostethus-pandurus
 
 [[ $dnam = ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0_CP ]] && export dtyp=CPMs
 [[ $dnam = ECMWF-ERAINT_r1i1p1_EUR-11-ens-6     ]] && export dtyp=RCMs

@@ -78,44 +78,45 @@ begin
   NN    = nrows-1                       ; number of samples in dataset
 
   vBoot = new((/NN*nboot/),typeof(valb))
+  iw = generate_sample_indices( NN, 1 )  ; with replacement
   do c=3 , ncols -1
     vals := valo(c,:)
 
-    ;; fill missing values with the same manner as bootstrapping
-    sortv := vals
-    qsort(sortv)
-    nvals := dimsizes(vals)
-    i=0
-    do r=0 , nvals-1
-      if ( .not.ismissing(sortv(r)) .and. i.eq.0 ) then
-        i0 = r
-      end if
-      if ( .not.ismissing(sortv(r)) .and. i.gt.0 ) then
-        iN = r
-      end if
-      if ( .not.ismissing(sortv(r))) then
-        i = i + 1
-      end if
-    end do
-    if ( i0.ne.0 ) then
-      rN = iN - i0 + 1
-      im := generate_sample_indices( rN , 1 ) ; with replacement      
-      im = im + i0  ; move the position of the indices by the starting index i0
-    end if
-    if ( i0.gt.0 ) then
-      im := generate_sample_indices( iN , 1 ) ; with replacement
-    end if
-    m=0
-    do r=0 , nvals-1
-      if ( ismissing(vals(r)) ) then
-        vals(r) = sortv(m)
-        m = m + 1
-      end if
-    end do
+;   ;; fill missing values with the same manner as bootstrapping
+;   sortv := vals
+;   qsort(sortv)
+;   nvals := dimsizes(vals)
+;   i=0
+;   do r=0 , nvals-1
+;     if ( .not.ismissing(sortv(r)) .and. i.eq.0 ) then
+;       i0 = r
+;     end if
+;     if ( .not.ismissing(sortv(r)) .and. i.gt.0 ) then
+;       iN = r
+;     end if
+;     if ( .not.ismissing(sortv(r))) then
+;       i = i + 1
+;     end if
+;   end do
+;   if ( i0.ne.0 ) then
+;     rN = iN - i0 + 1
+;     im := generate_sample_indices( rN , 1 ) ; with replacement      
+;     im = im + i0  ; move the position of the indices by the starting index i0
+;   end if
+;   if ( i0.gt.0 ) then
+;     im := generate_sample_indices( iN , 1 ) ; with replacement
+;   end if
+;   m=0
+;   do r=0 , nvals-1
+;     if ( ismissing(vals(r)) ) then
+;       vals(r) = sortv(m)
+;       m = m + 1
+;     end if
+;   end do
 
-    ;; continue to actual bootstrapping
+    ;; bootstrapping
     do n=0 , nboot-1
-      iw = generate_sample_indices( NN, 1 )  ; with replacement
+;     iw = generate_sample_indices( NN, 1 )  ; with replacement
       nA = 0+(n*NN)
       nB = (NN-1)+(n*NN)
       iwvals = vals(iw)

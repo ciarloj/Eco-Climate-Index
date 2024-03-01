@@ -8,11 +8,10 @@ CDO(){
 export hdir=/home/netapp-clima-scratch/jciarlo/paleosim
 export dnam=EOBS-010-v25e
 export dnam=ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0-BATS_CP
-export dnam=ECMWF-ERAINT_r1i1p1_EUR-11-ens-6
+#export dnam=ECMWF-ERAINT_r1i1p1_EUR-11-ens-6
 export onam=iNaturalist
-export spclist="ameles-decolor argiope-lobata brachytrupes-megacephalus polyommatus-celina scarabaeus-variolosus selysiothemis-nigra spilostethus-pandurus xylocopa-violacea"
+spclist="ameles-decolor argiope-lobata brachytrupes-megacephalus polyommatus-celina scarabaeus-variolosus selysiothemis-nigra spilostethus-pandurus xylocopa-violacea"
 
-export dp=summary
 if [ $dnam = ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0_CP ]; then
   export dtyp=CPMs
   export yrs=1995-1999
@@ -31,7 +30,6 @@ elif [ $dnam = EOBS-010-v25e ]; then
   export tdim=1d
 fi
 
-bootlist=""
 for spc in $spclist; do 
 
   echo "preparing for $spc ..."
@@ -40,19 +38,21 @@ for spc in $spclist; do
   nboot=$( echo "scale=4; $ntrg / $nobs" | bc )
   nboot=$( printf "%.0f\n" "$nboot" ) #round
   [[ $nboot -lt 1 ]] && nboot=1
-  bootlist="$bootlist $nboot"
+  export nboot=$nboot
+  export spc=$spc
 
-  edir=$hdir/data/$dtyp/$dnam/index/$onam/boot_$nboot/ndis
+  export bnam="_${dnam}_${onam}_${spc}_${yrs}.nc"
+  export edir=$hdir/data/$dtyp/$dnam/index/$onam/boot_$nboot/ndis
   efil=$edir/EcoIndex_${dnam}_${onam}_${spc}_${yrs}.nc
 
   ldir=$hdir/data/$dtyp/$dnam/index/$onam
   lfil=$ldir/${spc}_${onam}_${dnam}.log
+  export slog=$lfil
   nobs=$( cat $lfil | wc -l )
 
   eldir=$edir/latlon
   ellog=$eldir/EcoIndex_${dnam}_${onam}_${spc}_${yrs}.log
   mkdir -p $eldir
-  if [ $dp = true -o $dp = summary ]; then
   if [ ! -f $ellog ]; then
   for n in $( seq 1 $nobs ); do
     [[ $n -eq $nobs ]] && echo -n -e "\r\e[0K" && break
@@ -71,14 +71,9 @@ for spc in $spclist; do
     echo $val >> $ellog 
   done
   fi
-  fi
+
+  ncl -Q tools/plot_complete_panel.ncl | grep -v 'warning:ContourPlot'
 
 done
-
-export bootlist=$bootlist
-
-ncl -Q tools/plot_ecoindex_panel.ncl | grep -v 'warning:stringtofloat'
-
-
 
 }

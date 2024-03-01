@@ -24,16 +24,25 @@ edir=$ddir/$enam/index
 mkdir -p $edir
 
 ilist="cdd r99 prsum tasp90 tasp10 tasmean windmean orog"
-ilist="r99"
+ilist="rx5day nrx5day"
 
 for i in $ilist; do
   echo "make ensmean for $i ..."
   v=$i
-  [[ $i = cdd ]] && v=pr
-  [[ $i = r99 ]] && v=pr
+  [[ $i = cdd      ]] && v=pr
+  [[ $i = r99      ]] && v=pr
   [[ $i = prsum    ]] && v=pr
+  [[ $i = r10mm    ]] && v=pr
+  [[ $i = r20mm    ]] && v=pr
+  [[ $i = rx1day   ]] && v=pr
+  [[ $i = rx5day   ]] && v=pr
+  [[ $i = nrx5day  ]] && v=pr
   [[ $i = tasp90   ]] && v=tas
   [[ $i = tasp10   ]] && v=tas
+  [[ $i = hwfi     ]] && v=tas
+  [[ $i = cwfi     ]] && v=tas
+  [[ $i = tx90p    ]] && v=tas
+  [[ $i = tx10p    ]] && v=tas
   [[ $i = tasmean  ]] && v=tas
   [[ $i = windmean ]] && v=sfcWind
   ys=_$fcs
