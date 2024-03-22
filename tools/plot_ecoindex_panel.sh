@@ -7,7 +7,7 @@ CDO(){
 
 export hdir=/home/netapp-clima-scratch/jciarlo/paleosim
 export dnam=EOBS-010-v25e
-export dnam=ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0-BATS_CP
+#export dnam=ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0-BATS_CP
 export dnam=ECMWF-ERAINT_r1i1p1_EUR-11-ens-6
 export onam=iNaturalist
 export spclist="ameles-decolor argiope-lobata brachytrupes-megacephalus polyommatus-celina scarabaeus-variolosus selysiothemis-nigra spilostethus-pandurus xylocopa-violacea"

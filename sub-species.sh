@@ -9,8 +9,8 @@ dat=RCMs
 obs=iNaturalist
 spc=$1 #xylocopa-violacea
 nam=EOBS-010-v25e #ECMWF-ERAINT_r1i1p1_EUR-11-ens-6 #EOBS-010-v25e
-nam=ECMWF-ERAINT_r1i1p1_EUR-11-ens-6
-nam=ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0-BATS_CP
+#nam=ECMWF-ERAINT_r1i1p1_EUR-11-ens-6
+#nam=ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0-BATS_CP
 #nam=$1 #ECMWF-ERAINT_r1i1p1_SMHI-RCA4
 dat=RCMs
 [[ $nam = EOBS-010-v25e ]] && dat=OBS
@@ -75,7 +75,7 @@ if [ $am = manual ]; then
     exit 1
   fi
 else
-  sel=E
+  sel=C
 fi
 
 

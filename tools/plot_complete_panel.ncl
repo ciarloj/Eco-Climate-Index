@@ -68,6 +68,7 @@ begin
 ; nvar  = dimsizes(vars)
 ; vars := vars(3:nvar-1)
   vars := (/"cdd","prsum","rx1day","cwfi","tasmean","hwfi","windmean","orog","op","bc","EI"/)
+  labs := (/"a","b","c","d","e","f","g","h","i","j","k"/) 
   nvar := dimsizes(vars)
 
   plot = new(nvar,graphic)
@@ -75,6 +76,7 @@ begin
 
   do n=0 , nvar-1
 
+    ilab = "("+labs(n)+")"
     varl = vars(n)
     if ( varl.eq."EI" .or. varl.eq."op" ) then 
       var = "EcoIndex"
@@ -119,7 +121,7 @@ begin
     nrows = numAsciiRow(lfil)
     lines := asciiread(lfil,(/nrows/),"string")
     heads := lines(0)
-    lines := lines(1:nrows-1)
+    lines := lines(0:nrows-1)
 
     hchar := stringtochar(heads)
     fdel = " "
@@ -143,16 +145,18 @@ begin
 
     ilon = where(ismissing(evals),ilon@_FillValue,ilon)
     ilat = where(ismissing(evals),ilat@_FillValue,ilat)
-    nval = num(.not.ismissing(ilon))
+    nval = int2flt(num(.not.ismissing(ilon)))
     if ( varl.eq."EI" ) then
       th1 = 0.1
       ilon = where(evals.lt.th1,ilon,ilon@_FillValue)
       ilat = where(evals.lt.th1,ilat,ilat@_FillValue)
-      nmis = num(.not.ismissing(ilon))
+      nmis = int2flt(num(.not.ismissing(ilon)))
       if ( nval.eq.0 ) then
         npct = 0.0
+        plab := "n/a"
       else
         npct = nmis*100/nval
+        plab := npct
       end if
     end if 
     if ( varl.eq."bc" ) then
@@ -273,16 +277,20 @@ begin
     res@gsnLeftString          = "" 
     res@gsnRightString         = ""
     res@gsnRightStringFontHeightF = 0.013
-    res@gsnCenterString        = var
+    res@gsnCenterString        = ilab+" "+var
     res@gsnCenterStringOrthogonalPosF =  0.02
     if ( varl.eq."EI" ) then
-      res@gsnCenterString      = "EI (m~B~0.1~N~="+nmis+": p~B~0.1~N~="+sprintf("%5.1f",npct)+"%)"
+      if ( nval.eq.0 ) then
+        res@gsnCenterString      = ilab+" EI~B~s~N~ (p~B~0.1~N~="+plab+")"
+      else
+        res@gsnCenterString      = ilab+" EI~B~s~N~ (p~B~0.1~N~="+sprintf("%5.1f",plab)+"%)"
+      end if
     end if
     if ( varl.eq."op" ) then
-      res@gsnCenterString      = onam+" (n="+nval+")"
+      res@gsnCenterString      = ilab+" "+onam+" (n="+nval+")"
     end if
     if ( varl.eq."bc" ) then
-      res@gsnCenterString      = "EI Distribution"
+      res@gsnCenterString      = ilab+" EI~B~s~N~ Distribution"
       res@gsnCenterStringOrthogonalPosF = 0.01
     end if
     res@gsnCenterStringFontHeightF = 0.020
@@ -312,7 +320,7 @@ begin
       res@tmXTOn = False            ; Turn off top tickmarks.
 
       res@tiYAxisString = "quantity (#)"
-      res@tiXAxisString = "EI (#)"
+      res@tiXAxisString = "EI~B~s~N~ (#)"
 
       ;---Create color array to hold a bar color for each Y value.
       colors = new(dimb,integer)

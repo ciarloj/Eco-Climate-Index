@@ -66,14 +66,18 @@ begin
   formo@wkHeight = imgres
   wks   = gsn_open_wks (formo,outim)             ; send graphics to PNG file
 
+  labs := (/"a","b","c","d","e","f","g","h","i","j","k"/)
   plot = new(nspc,graphic)
   dumP = new(nspc,graphic)
 
   do n=0 , nspc-1
+    ilab  = "("+labs(n)+")"
     spc   = spclist(n)
     nboot = bootlist(n)
     spcc  = str_split(spc,"-")
-    spc_t = str_capital(spcc(0))+" "+spcc(1)
+;   spc_t = str_capital(spcc(0))+" "+spcc(1)
+    spc_c := stringtochar(spcc(0))
+    spc_t = str_capital(chartostring(spc_c(0)))+". "+spcc(1)
     print("preparing "+spc_t+" (nboot="+nboot+")")
 
     ddir = hdir+"/data/"+dtyp+"/"+dnam+"/index/"+onam+"/boot_"+nboot+"/ndis/"
@@ -90,7 +94,7 @@ begin
       nrows = numAsciiRow(lfil)
       lines := asciiread(lfil,(/nrows/),"string")
       heads := lines(0)
-      lines := lines(1:nrows-1)
+      lines := lines(0:nrows-1)
 
       hchar := stringtochar(heads)
       fdel = " "
@@ -111,6 +115,21 @@ begin
       elines := asciiread(elfil,(/nlrows/),"string")
       evals := elines(1:nlrows-1)
       evals := where(evals.eq."_",evals@_FillValue,evals)
+
+      ilon = where(ismissing(evals),ilon@_FillValue,ilon)
+      ilat = where(ismissing(evals),ilat@_FillValue,ilat)
+      nval = int2flt(num(.not.ismissing(ilon)))
+      th1 = 0.1
+      ilon = where(evals.lt.th1,ilon,ilon@_FillValue)
+      ilat = where(evals.lt.th1,ilat,ilat@_FillValue)
+      nmis = int2flt(num(.not.ismissing(ilon)))
+      if ( nval.eq.0 ) then
+        npct = 0.0
+        plab := "n/a"
+      else
+        npct = nmis*100/nval
+        plab := npct
+      end if
 
       if ( drawSummary ) then
         nvals = dimsizes(lines)
@@ -230,6 +249,7 @@ begin
     res@cnLinesOn              = False       ; no contour lines
     res@cnLineLabelsOn         = False       ; no contour line labels
     res@mpFillOn               = False
+    res@cnNoDataLabelOn        = False
 
     res@mpGeophysicalLineColor = "black"     ; color of continental outlines
     res@mpPerimOn              = True      ; draw box around map
@@ -242,15 +262,24 @@ begin
     res@tmYLOn = False
     res@tmXBOn = False
     res@gsnLeftString          = "" 
-    prcl = decimalPlaces(pcl,1,True)
-    res@gsnRightString         = "%>0.1="+sprintf("%5.1f",prcl) ;+"~C~%>0.5="+prcm
-    res@gsnRightStringFontHeightF = 0.015
-    res@gsnCenterString        = spc_t
+;   prcl = decimalPlaces(pcl,1,True)
+;   res@gsnRightString         = "%>0.1="+sprintf("%5.1f",prcl) ;+"~C~%>0.5="+prcm
+;   res@gsnRightStringFontHeightF = 0.015
+    res@gsnRightString         = ""
+
+    if ( nval.eq.0 ) then
+      res@gsnCenterString  = ilab+" "+spc_t+" (n="+nval+", p~B~0.1~N~="+plab+")"
+    else
+      res@gsnCenterString  = ilab+" "+spc_t+" (n="+nval+", p~B~0.1~N~="+sprintf("%5.1f",plab)+"%)"
+    end if
+
+;   res@gsnCenterString        = spc_t
     res@mpDataBaseVersion    = "HighRes"
 
     res@cnLevelSelectionMode   = "ExplicitLevels"
 ;   res@cnConstFLabelFormat    = "0f1"
-    res@cnLevels = (/.1,.2,.3,.4,.5,.6,.7,.8,.9,1/) 
+    levels = (/.1,.2,.3,.4,.5,.6,.7,.8,.9,1.0/)
+    res@cnLevels = levels 
     cmap = read_colormap_file("WhiteBlueGreenYellowRed")
     res@cnFillPalette = cmap
 
@@ -281,6 +310,7 @@ begin
   pres@lbTitleFontHeightF   = 0.01             ; make title smaller
   pres@lbTitleString    = "EI (#)"
   pres@lbTitlePosition      = "Top"
+  pres@lbLabelStrings       = sprintf("%3.1f",levels)   ; Format the labels
   pres@gsnMaximize = True
   pres@gsnPanelRight  = 0.97
   pres@gsnScale = True
