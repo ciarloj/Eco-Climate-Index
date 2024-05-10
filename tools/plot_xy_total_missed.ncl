@@ -4,11 +4,11 @@ begin
 ;************************************************
 ; read in data
 ;************************************************
- eobm = (/ 19.1,  6.8,  0, 21.1, 20.9, 19.7,  4.5,   4.3/) ; % missed
+ eobm = (/ 19.0,  6.8,  0, 20.6, 27.8, 17.4,  4.5,   4.3/) ; % missed
  eobt = (/  658, 2006,  0,  412,  115,  259, 3644, 4947./) ; total data (excluding missing)
- rcmm = (/ 23.8,  5.9, 32,   33, 28.2, 18.7,  8.8,  12.6/) ; % missed 
+ rcmm = (/ 23.8,  5.8, 36, 32.3, 31.7, 16.6,  8.8,  12.6/) ; % missed 
  rcmt = (/  777, 2883, 25,  564,  142,  386, 4751, 5378./) ; total data (excluding missing)
- cpmm = (/  9.9,  7.2, 44, 25.8, 27.5, 23.8,  6.4,   4.4/) ; % missed
+ cpmm = (/ 10.4,  7.2, 44, 25.2, 31.0, 23.5,  6.4,   4.4/) ; % missed
  cpmt = (/  777, 2519, 25,  519,  142,  281, 4390, 3890./) ; total data (excluding missing)
  nspc = dimsizes(eobm)
  spcl = (/"A. decolor","A. lobata","B. megacephalus","P. celina","S. variolosus","S. nigra","S. pandurus","X. violacea"/)

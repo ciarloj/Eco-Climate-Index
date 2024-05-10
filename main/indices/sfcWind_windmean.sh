@@ -32,7 +32,11 @@ echo "## index = $idx($v) "
 echo "## data  = $nam"
 echo "##########################################"
 
-CDO chname,$v,$idx -timmean -selyear,$y1/$y2 $fin $fou
+if [ $fcs = $yrs ]; then
+  CDO chname,$v,$idx -timmean $fin $fou
+else
+  CDO chname,$v,$idx -timmean -selyear,$y1/$y2 $fin $fou
+fi
 
 endTime=$(date +"%s" -u)
 elapsed=$(date -u -d "0 $endTime seconds - $startTime seconds" +"%H:%M:%S")

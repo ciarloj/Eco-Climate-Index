@@ -35,7 +35,11 @@ echo "##########################################"
 
 vo=cddETCCDI
 #CDO chname,$vo,$idx -timmean -selvar,$vo -etccdi_cdd -mulc,86400 -selyear,$y1/$y2 $fin $fou
-CDO chname,$vo,$idx -timmean -selvar,$vo -etccdi_cdd -selyear,$y1/$y2 $fin $fou
+if [ $fcs -eq $yrs ]; then
+  CDO chname,$vo,$idx -timmean -selvar,$vo -etccdi_cdd $fin $fou
+else
+  CDO chname,$vo,$idx -timmean -selvar,$vo -etccdi_cdd -selyear,$y1/$y2 $fin $fou
+fi
 ncatted -O -a long_name,$idx,m,c,"yearly_mean_of_maximum_consecutive_dry_days" $fou
 ncatted -O -a standard_name,$idx,m,c,"Yearly Mean of Max Consecutive Dry Days (<1mm, >/=5days)" $fou
 ncatted -O -a units,$idx,m,c,"days/year" $fou

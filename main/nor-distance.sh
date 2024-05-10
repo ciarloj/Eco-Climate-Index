@@ -22,6 +22,12 @@ hdir=/home/netapp-clima-scratch/jciarlo/paleosim
 dat=$5 #OBS
 fcs=$6 #1995-2014
 
+tim=$7
+hfcs=$8
+tsup=""
+[[ ! -z $tim ]] && tsup=_$tim
+[[ -z $tim ]] && tim=base
+
 idir=data/$dat/$nam/index
 odir=$idir/$obs
 ndir=$idir/$obs/boot_${nboot}/
@@ -35,12 +41,16 @@ echo "## obs   = $obs"
 echo "## model = $nam"
 echo "##########################################"
 
-olog=$odir/${spc}_${obs}_${nam}.log #original observations
-flog=$ndir/${spc}_${obs}_${nam}.csv #bootstrapped observations
-elog=$mdir/${spc}_${obs}_${nam}_${fcs}.ecolog #store stats for historical
-echo "" > $elog
+if [ $tim != "base" -a $tim != "hist" ]; then
+  flog=$ndir/${spc}_${obs}_${nam}_hist.csv #bootstrapped observations
+  elog=$mdir/${spc}_${obs}_${nam}_${hfcs}.ecolog
+else
+  olog=$odir/${spc}_${obs}_${nam}${tsup}.log #original observations
+  flog=$ndir/${spc}_${obs}_${nam}${tsup}.csv #bootstrapped observations
+  elog=$mdir/${spc}_${obs}_${nam}_${fcs}.ecolog #store stats for historical
+  echo "" > $elog
+fi
 
-export scrf=$flog
 cols=$( head -1 $flog )
 vars=$( head -1 $flog | cut -d' ' -f4- )
 nv=0
@@ -65,14 +75,20 @@ for v in $vars; do
   done
   export cn=$(( $vc - 1 ))
 
-  stt=$( ncl -nQ $script )
-  avg=$( echo $stt | cut -d, -f2 )
-  std=$( echo $stt | cut -d, -f1 )
-  lim=$( echo $stt | cut -d, -f3 )
-
+  if [ $tim != "base" -a $tim != "hist" ]; then
+    avg=$( cat $elog | grep $v | cut -d' ' -f3 | cut -d= -f2 )
+    std=$( cat $elog | grep $v | cut -d' ' -f4 | cut -d= -f2 )
+    lim=$( cat $elog | grep $v | cut -d' ' -f5 | cut -d= -f2 )
+  else
+    export scrf=$flog
+    stt=$( ncl -nQ $script )
+    avg=$( echo $stt | cut -d, -f2 )
+    std=$( echo $stt | cut -d, -f1 )
+    lim=$( echo $stt | cut -d, -f3 )
+    echo "## $v($cn) avg=$avg std=$std lim=$lim ##" >> $elog
+  fi 
   echo "## $v($cn) avg=$avg std=$std lim=$lim ##"
-  echo "## $v($cn) avg=$avg std=$std lim=$lim ##" >> $elog
-  if [ $v = orog -o $v = popdenmean ]; then
+  if [ $tim = "base" -a $v = orog -o $v = popdenmean ]; then
     vif=$( eval ls $idir/*_${v}_${nam}.nc )
   else
     vif=$( eval ls $idir/*_${v}_${nam}_${fcs}.nc )
@@ -112,33 +128,37 @@ if [ $nam = EOBS-010-v25e ]; then
 fi
 
 #find historical max at lat/lon of observations
-nobs=$( cat $olog | wc -l )
-ecoll=$mdir/EcoIndex_${nam}_${obs}_${spc}_${fcs}_ll.nc
-ecomx=$mdir/EcoIndex_${nam}_${obs}_${spc}_${fcs}_max.nc
 tmp=$mdir/EcoIndex_${nam}_${obs}_${spc}_${fcs}_tmp.nc
-for n in $( seq 2 $nobs ); do # start from 2 to skip header
-  echo "##finding max for obs $(( n-1 )) / $(( $nobs -1 ))"
-  set +e
-  line=$( cat $olog | head -$n | tail -1 )
+if [ $tim != "base" -a $tim != "hist" ]; then
+  emx=$( cat $elog | grep Emax | cut -d' ' -f4 )
+else
+  nobs=$( cat $olog | wc -l )
+  ecoll=$mdir/EcoIndex_${nam}_${obs}_${spc}_${fcs}_ll.nc
+  ecomx=$mdir/EcoIndex_${nam}_${obs}_${spc}_${fcs}_max.nc
+  for n in $( seq 2 $nobs ); do # start from 2 to skip header
+    echo "##finding max for obs $(( n-1 )) / $(( $nobs -1 ))"
+    set +e
+    line=$( cat $olog | head -$n | tail -1 )
+    set -e
+    lat=$( echo $line | cut -d' ' -f2 )
+    lon=$( echo $line | cut -d' ' -f3 )
+    CDO remapnn,lon=${lon}_lat=${lat} $ecf $ecoll 2>/dev/null
+    if [ $n = 2 ]; then
+      cp $ecoll $ecomx
+    else
+      CDO ensmax $ecoll $ecomx $tmp 2>/dev/null
+      mv $tmp $ecomx
+    fi
+  done
+  rm $ecoll
+  set +e 
+  emx=$( ncdump -v comp $ecomx | tail -2 | head -1 | cut -d' ' -f3 ) 
   set -e
-  lat=$( echo $line | cut -d' ' -f2 )
-  lon=$( echo $line | cut -d' ' -f3 )
-  CDO remapnn,lon=${lon}_lat=${lat} $ecf $ecoll 2>/dev/null
-  if [ $n = 2 ]; then
-    cp $ecoll $ecomx
-  else
-    CDO ensmax $ecoll $ecomx $tmp 2>/dev/null
-    mv $tmp $ecomx
-  fi
-done
-rm $ecoll
-set +e 
-emx=$( ncdump -v comp $ecomx | tail -2 | head -1 | cut -d' ' -f3 ) 
-set -e
-rm $ecomx
+  rm $ecomx
+  echo "## Emax = $emx" >> $elog
+fi
 echo "## Emax = $emx"
-echo "## Emax = $emx" >> $elog
-CDO divc,$emx $ecf $tmp 
+CDO divc,$emx $ecf $tmp
 mv $tmp $ecf
 
 endTime=$(date +"%s" -u)

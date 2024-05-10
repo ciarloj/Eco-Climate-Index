@@ -19,10 +19,14 @@ yrs=$3 #1985-2021 #years available
 fcs=$4 #1995-2014 #years to study
 vars=$5 #"pr tas tasmax tasmin sfcWind orog popden"
 din=$hdir/data/$dat/$nam
+tim=$6
+dep=$7
 
+tsup=""
+[[ ! -z $tim ]] && tsup=_$tim
 for v in $vars; do
   [[ $v = pr      ]] && indices="cdd rx1day prsum" #"r10mm r20mm rx5day nrx5day" #"r99"
-  [[ $v = tas     ]] && indices="cwfi tasmean" #"cwfi hwfi tasmean" #"tasp90 tasp10 tasmean" #"hwfi cwfi tasmean"
+  [[ $v = tas     ]] && indices="tasp10 tasp90 tasmean" #"cwfi hwfi tasmean" #"tasp90 tasp10 tasmean" #"hwfi cwfi tasmean"
   [[ $v = tasmax  ]] && indices="tasmaxmax tasmaxmean"
   [[ $v = tasmin  ]] && indices="tasminmin tasminmean"
   [[ $v = sfcWind ]] && indices="fg6bft windmean"
@@ -36,11 +40,11 @@ for v in $vars; do
     [[ $i = fg6bft ]] && bs="slurm"
     bs=slurm
     if [ $bs = "slurm" ]; then
-      j=${i}_${nam}
+      j=${i}_${nam}$tsup
       o=logs/${j}.o
       e=logs/${j}.e
       echo '$$ Submitting '"$idir/${v}_${i}.sh"
-      sbatch -J $j -o $o -e $e -p $pp -t $tt $idir/${v}_${i}.sh $nam $frq $yrs $fcs $din
+      sbatch -J $j -o $o -e $e -p $pp -t $tt $dep $idir/${v}_${i}.sh $nam $frq $yrs $fcs $din
     elif [ $bs = "bash" ]; then
       echo '$$ Running '"$idir/${v}_${i}.sh"
       bash $idir/${v}_${i}.sh $nam $frq $yrs $fcs $din

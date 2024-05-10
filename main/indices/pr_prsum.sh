@@ -33,7 +33,11 @@ echo "## data  = $nam"
 echo "##########################################"
 
 #CDO chname,$v,$idx -timmean -yearsum -mulc,86400 -selyear,$y1/$y2 $fin $fou
-CDO chname,$v,$idx -timmean -yearsum -selyear,$y1/$y2 $fin $fou
+if [ $fcs -eq $yrs ]; then
+  CDO chname,$v,$idx -timmean -yearsum $fin $fou
+else
+  CDO chname,$v,$idx -timmean -yearsum -selyear,$y1/$y2 $fin $fou
+fi
 ncatted -O -a units,$idx,m,c,"mm/year" $fou
 
 endTime=$(date +"%s" -u)

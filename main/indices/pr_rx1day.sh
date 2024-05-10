@@ -36,7 +36,7 @@ echo "##########################################"
 
 ftm=$fin
 if [ $yrs != $fcs ]; then
-  dsy=$din/.sy_${idx}
+  dsy=$din/.sy_${idx}_$fcs
   mkdir -p $dsy
   ftm=$dsy/$( basename $fin .nc )_sy.nc
   CDO selyear,$y1/$y2 $fin $ftm

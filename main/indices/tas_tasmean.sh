@@ -40,7 +40,11 @@ echo "## index = $idx($v)"
 echo "## data  = $nam"
 echo "##########################################"
 
-CDO chname,$v,$idx -timmean -selyear,$y1/$y2 $fin $fou
+if [ $fcs != $yrs ]; then
+  CDO chname,$v,$idx -timmean $fin $fou
+else
+  CDO chname,$v,$idx -timmean -selyear,$y1/$y2 $fin $fou
+fi
 ncatted -O -a units,$idx,m,c,"degC" $fou
 
 endTime=$(date +"%s" -u)

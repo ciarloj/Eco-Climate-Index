@@ -190,10 +190,12 @@ begin
     res@gsnLeftString          = "" 
     res@gsnRightString         = ""
     res@gsnCenterString        = idx
+    res@gsnCenterStringFontHeightF = 0.02
     res@mpDataBaseVersion    = "HighRes"
 
     res@cnLevelSelectionMode   = "ExplicitLevels"
-    res@cnLevels = (/-5,-4,-3,-2,-1,-.5,.5,1,2,3,4,5/)
+    levels = (/-5,-4,-3,-2,-1,-.5,.5,1,2,3,4,5/)
+    res@cnLevels = levels
     cmap = read_colormap_file("BlueWhiteOrangeRed")
     res@cnFillPalette = cmap
 
@@ -211,6 +213,7 @@ begin
   pres@lbTitleFontHeightF   = 0.01             ; make title smaller
   pres@lbTitleString        = "(%)"
   pres@lbTitlePosition      = "Top"
+  pres@lbLabelStrings       = sprintf("%3.1f",levels)   ; Format the labels
   pres@gsnMaximize = True
   pres@gsnPanelRight  = 0.97
   pres@gsnScale = True

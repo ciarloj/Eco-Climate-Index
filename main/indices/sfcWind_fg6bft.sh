@@ -34,17 +34,23 @@ echo "##########################################"
 echo "## index = $idx($v) "
 echo "## data  = $nam"
 echo "##########################################"
-dsy=$din/.sy_${idx}
+dsy=$din/.sy_${idx}_$fcs
 mkdir -p $dsy
 ftm=$dsy/$( basename $fin .nc )_sy.nc
 
-CDO selyear,$y1/$y2 $fin $ftm
+if [ $fcs != $yrs ]; then
+  CDO selyear,$y1/$y2 $fin $ftm
+else
+  ftm=$fin
+fi
 CDO chname,$v,$idx -divc,$dy -timsum -gec,10.8 $ftm $fou
 ncatted -O -a long_name,$idx,m,c,"days_above_6Bft" $fou
 ncatted -O -a standard_name,$idx,m,c,"Yearly Mean days with wind speed >/= 6Bft" $fou
 ncatted -O -a units,$idx,m,c,"days/year" $fou
-rm $ftm
-rmdir $dsy
+if [ $fcs != $yrs ]; then
+  rm $ftm
+  rmdir $dsy
+fi
 
 endTime=$(date +"%s" -u)
 elapsed=$(date -u -d "0 $endTime seconds - $startTime seconds" +"%H:%M:%S")

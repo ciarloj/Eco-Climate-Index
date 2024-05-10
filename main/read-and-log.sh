@@ -36,10 +36,14 @@ if [ ! -f $ocsv ]; then
 fi
 obs=$( basename $( dirname $ocsv ))
 
+tim=$6
+tsup=""
+[[ ! -z $tim ]] && tsup=_$tim
+
 ## Start processing
 idir=$ddir/index/
 odir=$idir/$obs
-lout=$odir/$( basename $ocsv .csv )_${nam}.log
+lout=$odir/$( basename $ocsv .csv )_${nam}${tsup}.log
 mkdir -p $odir
 
 echo "##########################################"
@@ -80,8 +84,10 @@ while read line; do
       header="$header $id"
       #echo "## extracting $id from $v .."
       idxf=$idir/${v}_${id}_${nam}_${fcs}.nc
-      [[ $id = orog ]] && idxf=$idir/${v}_${id}_${nam}.nc
-      [[ $id = popdenmean ]] && idxf=$idir/${v}_${id}_${nam}.nc
+      if [ -z $tim ]; then
+        [[ $id = orog ]] && idxf=$idir/${v}_${id}_${nam}.nc
+        [[ $id = popdenmean ]] && idxf=$idir/${v}_${id}_${nam}.nc
+      fi
       tmpf=$idir/.${v}_${id}_${nam}_${fcs}_${spc}_tmp.nc
       CDO remapnn,lon=$lon/lat=$lat $idxf $tmpf >/dev/null
       val=$( ncdump -v $id $tmpf | tail -2 | head -1 | cut -d' ' -f3 )

@@ -6,11 +6,12 @@ CDO(){
 }
 
 export hdir=/home/netapp-clima-scratch/jciarlo/paleosim
-export dnam=EOBS-010-v25e
+export dnam=ECMWF-ERAINT_r1i1p1_EUR-11-ens-6
 export dnam=ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0-BATS_CP
-#export dnam=ECMWF-ERAINT_r1i1p1_EUR-11-ens-6
 export onam=iNaturalist
 export spclist="ameles-decolor argiope-lobata brachytrupes-megacephalus polyommatus-celina scarabaeus-variolosus selysiothemis-nigra spilostethus-pandurus xylocopa-violacea"
+export spclist="spilostethus-pandurus"
+export spclist="brachytrupes-megacephalus"
 
 export dp=summary
 if [ $dnam = ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0_CP ]; then
@@ -34,13 +35,13 @@ fi
 bootlist=""
 for spc in $spclist; do 
 
+  export spc=$spc
   echo "preparing for $spc ..."
   nobs=$( cat $hdir/data/OBS/$onam/${spc}_${onam}.csv | wc -l )
   ntrg=5000 # target number of observations (to reach with boot if required)
   nboot=$( echo "scale=4; $ntrg / $nobs" | bc )
   nboot=$( printf "%.0f\n" "$nboot" ) #round
   [[ $nboot -lt 1 ]] && nboot=1
-  nboot=1
   bootlist="$bootlist $nboot"
 
   edir=$hdir/data/$dtyp/$dnam/index/$onam/boot_$nboot/ndis
@@ -78,7 +79,7 @@ done
 
 export bootlist=$bootlist
 
-ncl -Q tools/plot_ecoindex_panel.ncl | grep -v 'warning:stringtofloat'
+ncl -Q tools/plot_ecoindex_csc-islands.ncl | grep -v 'warning:stringtofloat'
 
 
 

@@ -41,7 +41,7 @@ echo "##########################################"
 echo "## index = $idx($v)"
 echo "## data  = $nam"
 echo "##########################################"
-dsy=$din/.sy_${idx}
+dsy=$din/.sy_${idx}_$fcs
 dpp=$din/p$rr
 mkdir -p $dsy $dpp
 vo=warm_spell_days_index_wrt_90th_percentile_of_reference_period
@@ -58,12 +58,12 @@ for y in $( seq $y1 $y2 ); do
   d=$( ncdump -h $fyr | grep -i time | head -1 | cut -d'(' -f2 | cut -d' ' -f1 )
   set -e
   if [ $d != 360 -a $d != 365 -a $d != 366 ]; then
-    if [ $d = 364 ]; then
-      # some simulations started from day 02
-      # check if first timestep is day 02
+    if [ $d = 364 -o $d = 363 ]; then
+      # some simulations started from day 02 or 03
+      # check if first timestep is day 02 or 03
       ts1=$dsy/${v}_${nam}_${frq}_${y}_ts1.nc
       CDO seltimestep,1 $fyr $ts1
-      dck=$( ncdump -v time -t $ts1 | tail -2 | head -1 | cut -d'"' -f2 | cut -d- -f3 )
+      dck=$( ncdump -v time -t $ts1 | tail -2 | head -1 | cut -d'"' -f2 | cut -d- -f3 | cut -d' ' -f1 )
       if [ $dck = 02 ]; then
       # replicating day 1 for these cases
         ts1s=$dsy/${v}_${nam}_${frq}_${y}_ts1s.nc
@@ -72,6 +72,18 @@ for y in $( seq $y1 $y2 ); do
         CDO mergetime $ts1s $fyr ${fyr}_mod.nc
         mv ${fyr}_mod.nc $fyr
         d=365
+        rm $ts1s
+      elif [ $dck = 03 ]; then
+      # replicating day 1 and 2 for these cases
+        ts1s=$dsy/${v}_${nam}_${frq}_${y}_ts1s.nc
+        ts2s=$dsy/${v}_${nam}_${frq}_${y}_ts2s.nc
+        CDO setday,01 $ts1 $ts1s
+        CDO setday,02 $ts1 $ts2s
+        rm $ts1
+        CDO mergetime $ts1s $ts2s $fyr ${fyr}_mod.nc
+        mv ${fyr}_mod.nc $fyr
+        d=365
+        rm $ts1s $ts2s
       else
         rm $ts1
         echo "Calendar Error! y=$y d="$d
@@ -152,6 +164,7 @@ ncatted -O -a standard_name,$idx,m,c,"Yearly Mean 6+ Consecutive days above 5-da
 ncatted -O -a units,$idx,m,c,"days/year" $fou
 rm $dsy/$( basename $fou .nc)_????-hwfi.nc
 
+set +e
 rmdir $dsy
 
 endTime=$(date +"%s" -u)

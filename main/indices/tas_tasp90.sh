@@ -42,9 +42,13 @@ echo "## index = $idx($v)"
 echo "## data  = $nam"
 echo "##########################################"
 
-CDO chname,$v,$idx -selyear,$y1/$y2 $fin $fsy
-CDO timpctl,$rr $fsy -timmin $fsy -timmax $fsy $fou
-rm $fsy
+if [ $fcs != $yrs ]; then
+  CDO chname,$v,$idx -selyear,$y1/$y2 $fin $fsy
+  CDO timpctl,$rr $fsy -timmin $fsy -timmax $fsy $fou
+  rm $fsy
+else
+  CDO chname,$v,$idx -timpctl,$rr $fin -timmin $fin -timmax $fin $fou
+fi
 ncatted -O -a long_name,$idx,m,c,"p${rr}_air_temperature" $fou
 ncatted -O -a standard_name,$idx,m,c,"P$rr of Near-Surface Air Temperature" $fou
 

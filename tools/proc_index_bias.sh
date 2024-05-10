@@ -45,6 +45,12 @@ for idx in $indices; do
     CDO div -sub $gf $rf $rf $bf
     rm $gf
   fi
+  if [ $nam = ECMWF-ERA5_r1i1p1f1_ICTP-RegCM5-0-BATS_CP -a $idx = windmean ]; then
+    tmpref=$bdir/tas_tasmean_${nam}${tsf}.nc
+    CDO remapnn,$tmpref $bf ${bf}_tmp.nc
+    mv ${bf}_tmp.nc $bf
+  fi
+
 done
 
 export dtyp=$dat

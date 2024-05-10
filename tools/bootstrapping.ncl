@@ -8,9 +8,9 @@ begin
   nboot = stringtointeger(getenv("nboot"))  ; bootstrap replications
   idir = getenv("idir")
   bdir = getenv("bdir")
+; hbase = getenv("hbase")
 
   print("## Bootstrapping by "+nboot+" for "+spc+" ##")
-
 
   ;; prepare output
   outf = bdir+"/"+flog
@@ -39,33 +39,36 @@ begin
 
   print("## checking basic statistics")
   ;; check basic statitics for data cleaning
-  stato = new((/ncols,4/),typeof(valb))
+  stato = new((/ncols,5/),typeof(valb))
   do c=3 , ncols -1
     valx := valo(c,:)
     minx := min(valx)
     maxx := max(valx)
     avgx := avg(valx)
     medx := dim_median(valx)
-  ; stdx := stddev(valx)
+    stdx := stddev(valx)
     stato(c,0) = minx
     stato(c,1) = maxx
     stato(c,2) = avgx
     stato(c,3) = medx
-    print(heads(c)+" min="+minx+" max="+maxx+" avg="+avgx+" median="+medx)
+    stato(c,4) = stdx
+    print(heads(c)+" min="+minx+" max="+maxx+" avg="+avgx+" median="+medx+" st.dev="+stdx)
   end do
 
   print("... saving original statistics ...")
-  txtx = new((/5/),"string")
+  txtx = new((/6/),"string")
   txtx(0) = heads_t
   txtx(1) = "MN lat lon"
   txtx(2) = "MX lat lon"
   txtx(3) = "AV lat lon"
   txtx(4) = "MD lat lon"
+  txtx(5) = "SD lat lon"
   do c=3 , ncols-1
     txtx(1) = txtx(1)+" "+stato(c,0)
     txtx(2) = txtx(2)+" "+stato(c,1)
     txtx(3) = txtx(3)+" "+stato(c,2)
     txtx(4) = txtx(4)+" "+stato(c,3)
+    txtx(5) = txtx(5)+" "+stato(c,4)
   end do
   csvnm = str_split(flog,".")
   csvnm := csvnm(0)
@@ -82,41 +85,8 @@ begin
   do c=3 , ncols -1
     vals := valo(c,:)
 
-;   ;; fill missing values with the same manner as bootstrapping
-;   sortv := vals
-;   qsort(sortv)
-;   nvals := dimsizes(vals)
-;   i=0
-;   do r=0 , nvals-1
-;     if ( .not.ismissing(sortv(r)) .and. i.eq.0 ) then
-;       i0 = r
-;     end if
-;     if ( .not.ismissing(sortv(r)) .and. i.gt.0 ) then
-;       iN = r
-;     end if
-;     if ( .not.ismissing(sortv(r))) then
-;       i = i + 1
-;     end if
-;   end do
-;   if ( i0.ne.0 ) then
-;     rN = iN - i0 + 1
-;     im := generate_sample_indices( rN , 1 ) ; with replacement      
-;     im = im + i0  ; move the position of the indices by the starting index i0
-;   end if
-;   if ( i0.gt.0 ) then
-;     im := generate_sample_indices( iN , 1 ) ; with replacement
-;   end if
-;   m=0
-;   do r=0 , nvals-1
-;     if ( ismissing(vals(r)) ) then
-;       vals(r) = sortv(m)
-;       m = m + 1
-;     end if
-;   end do
-
     ;; bootstrapping
     do n=0 , nboot-1
-;     iw = generate_sample_indices( NN, 1 )  ; with replacement
       nA = 0+(n*NN)
       nB = (NN-1)+(n*NN)
       iwvals = vals(iw)
@@ -142,49 +112,66 @@ begin
   bootf = bootd+"/"+csvnm+".csv"
   write_table(bootf,"w",[/txtb/],"%s")
 
-  ; standardize indices based on W_i = ( X_i - X^bar ) / sigma
-  print("... standardizing bootstrap ...")
+; ; standardize indices based on W_i = ( X_i - X^bar ) / sigma
+; print("... standardizing bootstrap ...")
 
-  valw = valb
+; if ( hbase.eq."href" ) then
+;   ; use historical avg and stddev from historical data for standardization
+;   hflog = getenv("hflog")
+;   ;; extract data from log file
+;   nrowsh = numAsciiRow(hflog)
+;   linesh := asciiread(scrf,(/nrowsh/),"string")
+;   avgslh := linesh(1)
+;   stdslh := linesh(2)
+; end if
+
+; valw = valb
   do c=3 , ncols -1
     vals := valb(c,:)
-    avgs := avg(vals)
-    stds := stddev(vals)  
-    do n=0 , nval-1
-      if ( stds.eq.0 .and. avgs.eq.0 ) then
-        valw(c,n) = vals(n)
-      else 
-        valw(c,n) = (vals(n) - avgs )/ stds
-      end if
-    end do
+;   if ( hbase.eq."href" ) then
+;     avgs := stringtofloat(avgslh(c))
+;     stds := stringtofloat(stdslh(c))
+;   else
+      avgs := avg(vals)
+      stds := stddev(vals)  
+;   end if 
+   ;do n=0 , nval-1
+   ; ;if ( stds.eq.0 .and. avgs.eq.0 ) then
+   ; ;  valw(c,n) = vals(n)
+   ; ;else 
+   ;    valw(c,n) = (vals(n) - avgs )/ stds
+   ; ;end if
+   ;end do
     stat(c,0) = avgs
     stat(c,1) = stds
   end do
 
-  print("... saving bootstrapped statistics ...")
-  txtc = new((/3/),typeof(txtb))
-  txtc(0) = heads_t
-  txtc(1) = "A lat lon"
-  txtc(2) = "SD lat lon"
-  do c=3 , ncols-1
-    txtc(1) = txtc(1)+" "+stat(c,0)
-    txtc(2) = txtc(2)+" "+stat(c,1)
-  end do
-
-  standd = bootd+"/standard" 
+; standd = bootd+"/standard"
 ; system("mkdir -p "+standd)
-  txts = txtb
-  do n=0 , nval-1
-    ;print("preparing csv "+(n+1)+"/"+nval)
-    txtl = (n+1)+""
-    do c=1 , ncols-1
-      txtl = txtl+" "+valw(c,n)
+; if ( hbase.ne."href" ) then
+    print("... saving bootstrapped statistics ...")
+    txtc = new((/3/),typeof(txtb))
+    txtc(0) = heads_t
+    txtc(1) = "A lat lon"
+    txtc(2) = "SD lat lon"
+    do c=3 , ncols-1
+      txtc(1) = txtc(1)+" "+stat(c,0)
+      txtc(2) = txtc(2)+" "+stat(c,1)
     end do
-    txts(n+1) = txtl
-  end do
-  standf = standd+"/"+csvnm+".csv"
-  write_table(standf,"w",[/txts/],"%s")
-  statsf = standd+"/"+csvnm+"_stats.csv"
-  write_table(statsf,"w",[/txtc/],"%s")
+    statsf = bootd+"/"+csvnm+"_stats.csv"
+    write_table(statsf,"w",[/txtc/],"%s")
+; end if
+
+; txts = txtb
+; do n=0 , nval-1
+;   ;print("preparing csv "+(n+1)+"/"+nval)
+;   txtl = (n+1)+""
+;   do c=1 , ncols-1
+;     txtl = txtl+" "+valw(c,n)
+;   end do
+;   txts(n+1) = txtl
+; end do
+; standf = standd+"/"+csvnm+".csv"
+; write_table(standf,"w",[/txts/],"%s")
 
 end
